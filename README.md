@@ -26,7 +26,7 @@ Installation
 Clone the repository
 bash
 Copiar código
-git clone https://github.com/yourusername/app-tarefista.git
+git clone https://github.com/xandeq/app-tarefista.git
 Install dependencies
 bash
 Copiar código
