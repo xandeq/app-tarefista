@@ -38,9 +38,12 @@ export default function TaskScreen({ navigation, route }) {
       return;
     }
     try {
+      const timestamp = firebase.firestore.FieldValue.serverTimestamp();
       const docRef = await addDoc(collection(db, "tasks"), {
         text: task,
         completed: false,
+        createdAt: timestamp,
+        updatedAt: timestamp,
       });
       console.log("Tarefa adicionada com sucesso: ", docRef.id);
       if (route.params?.refreshTasks) {
