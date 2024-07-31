@@ -56,6 +56,7 @@ const TaskItem = ({ task, onRemove, refreshTasks }) => {
     try {
       await updateDoc(doc(db, "tasks", task.id), {
         completed: !task.completed,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
       refreshTasks();
     } catch (error) {
