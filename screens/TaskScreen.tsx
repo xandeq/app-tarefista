@@ -42,7 +42,7 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
           }
         );
       } else {
-        // Add new task
+        // add new task
         response = await fetch(
           "https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks",
           {
