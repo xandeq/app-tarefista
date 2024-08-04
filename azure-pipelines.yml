@@ -2,22 +2,40 @@ trigger:
 - master
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: 'macOS-latest'  # Use 'macOS-latest' for iOS builds or 'ubuntu-latest' for Android builds
 
 steps:
 - task: NodeTool@0
   inputs:
-    versionSpec: '12.x'
+    versionSpec: '14.x'
   displayName: 'Install Node.js'
 
 - script: |
     npm install
-    npm run build
-  displayName: 'npm install and build'
+  displayName: 'Install dependencies'
 
+# If you're building for iOS
+- script: |
+    cd ios
+    pod install
+  displayName: 'Install CocoaPods dependencies'
+  condition: eq(variables['Build.SourceBranchName'], 'master')
+
+# Build the project
+- script: |
+    npm run build
+  displayName: 'Build the project'
+
+# Run tests
 - script: |
     npm test
   displayName: 'Run tests'
+
+# For Android, you might want to build the APK
+# - script: |
+#     cd android
+#     ./gradlew assembleRelease
+#   displayName: 'Build Android APK'
 
 - task: CopyFiles@2
   inputs:
