@@ -8,31 +8,20 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
-import { getAuth, signOut } from "firebase/auth";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { ParamListBase } from "@react-navigation/native";
-import RootStackParamList from "../App"; // Certifique-se de que isso aponta para o local correto onde RootStackParamList é definido
 
 type RegisterScreenNavigationProp = NativeStackNavigationProp<
   ParamListBase,
-  keyof typeof RootStackParamList
+  'Login'
 >;
+
 const AuthContext = createContext<{
   user: { displayName?: string; photoURL?: string };
 }>({
   user: {},
 });
-
-const firebaseConfig = {
-  apiKey: "AIzaSyC3tzna3npRAunU6vHulIXTX6-ALOYNMRg",
-  authDomain: "tarefista.firebaseapp.com",
-  projectId: "tarefista",
-  storageBucket: "tarefista.appspot.com",
-  messagingSenderId: "104050667822",
-  appId: "1:104050667822:web:515935d732fc3aaf228abf",
-  measurementId: "G-QJPPMWLBZY",
-};
 
 const ProfileScreen: React.FC = () => {
   const { user } = useContext(AuthContext);
@@ -41,18 +30,26 @@ const ProfileScreen: React.FC = () => {
   const [displayName, setDisplayName] = useState(user?.displayName || "");
 
   const handleSignOut = async () => {
-    const app: any = initializeApp(firebaseConfig);
-    const auth: any = getAuth(app);
     try {
-      await signOut(auth);
-      navigation.navigate("Login");
+      const response = await fetch('https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        navigation.navigate("Login");
+      } else {
+        console.error('Logout failed');
+      }
     } catch (error) {
       console.error("Erro ao fazer logout: ", error);
     }
   };
 
   const handleSave = () => {
-    // Aqui você pode adicionar a lógica para salvar as alterações do perfil no Firebase
+    // Implement profile update logic via API
     setIsEditing(false);
   };
 
@@ -127,6 +124,3 @@ const styles = StyleSheet.create({
 });
 
 export default ProfileScreen;
-function initializeApp(firebaseConfig: any): any {
-  throw new Error("Function not implemented.");
-}

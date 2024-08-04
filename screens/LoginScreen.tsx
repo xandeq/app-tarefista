@@ -1,37 +1,34 @@
-// screens/LoginScreen.tsx
 import React, { useState } from "react";
 import { View, Text, TextInput, Button, StyleSheet } from "react-native";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { getAuth } from "firebase/auth";
 
 interface LoginScreenProps {
   navigation: any;
 }
 
-const firebaseConfig = {
-  apiKey: "AIzaSyC3tzna3npRAunU6vHulIXTX6-ALOYNMRg",
-  authDomain: "tarefista.firebaseapp.com",
-  projectId: "tarefista",
-  storageBucket: "tarefista.appspot.com",
-  messagingSenderId: "104050667822",
-  appId: "1:104050667822:web:515935d732fc3aaf228abf",
-  measurementId: "G-QJPPMWLBZY",
-};
-
-// Initialize Firebase
-
 const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
-  const app: any = initializeApp(firebaseConfig);
-  const auth: any = getAuth(app);
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
 
   const handleLogin = async () => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      navigation.navigate("Home");
+      const response = await fetch('https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Handle successful login, e.g., store token, navigate to home
+        navigation.navigate("Home");
+      } else {
+        // Handle login error
+        console.error('Login failed');
+      }
     } catch (error) {
-      console.error(error);
+      console.error("Error logging in:", error);
     }
   };
 
@@ -78,14 +75,3 @@ const styles = StyleSheet.create({
 });
 
 export default LoginScreen;
-function initializeApp(firebaseConfig: {
-  apiKey: string;
-  authDomain: string;
-  projectId: string;
-  storageBucket: string;
-  messagingSenderId: string;
-  appId: string;
-  measurementId: string;
-}) {
-  throw new Error("Function not implemented.");
-}

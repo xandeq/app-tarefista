@@ -1,4 +1,3 @@
-// screens/HomeScreen.tsx
 import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
@@ -10,32 +9,15 @@ import {
   Image,
 } from "react-native";
 import TaskItem from "./TaskItem";
-import "firebase/analytics";
-import "firebase/auth";
-import "firebase/compat/firestore";
-import firebase from "firebase/compat/app";
-import { collection, getDocs } from "firebase/firestore";
 import Icon from "react-native-vector-icons/Ionicons";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
 } from "react-native-reanimated";
+import axios from "axios";
 
 const logo = require("../assets/logo.png");
-
-const firebaseConfig = {
-  apiKey: "AIzaSyC3tzna3npRAunU6vHulIXTX6-ALOYNMRg",
-  authDomain: "tarefista.firebaseapp.com",
-  projectId: "tarefista",
-  storageBucket: "tarefista.appspot.com",
-  messagingSenderId: "104050667822",
-  appId: "1:104050667822:web:515935d732fc3aaf228abf",
-  measurementId: "G-QJPPMWLBZY",
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
 
 interface HomeScreenProps {
   navigation: any;
@@ -44,15 +26,25 @@ interface HomeScreenProps {
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [taskToEdit, setTaskToEdit] = useState<any | null>(null);
 
   const fetchTasks = async () => {
-    const taskCollection = await getDocs(collection(db, "tasks"));
-    const tasksData = taskCollection.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    setTasks(tasksData);
-    setLoading(false);
+    try {
+      const response = await axios.get(
+        "https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks"
+      );
+      if (response.data) {
+        console.log(response.data);
+        //const tasksData = await response.json();
+        setTasks(response.data);
+      } else {
+        console.error("Error fetching tasks:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -75,6 +67,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   };
   const handlePressOut = () => {
     scale.value = withSpring(1);
+  };
+  const handleEditTask = (task: any) => {
+    setTaskToEdit(task);
+    navigation.navigate("Task", { task, refreshTasks: fetchTasks });
   };
 
   return (
@@ -101,6 +97,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           renderItem={({ item }) => (
             <TaskItem
               task={item}
+              onEdit={handleEditTask}
               onRemove={handleRemoveTask}
               refreshTasks={fetchTasks}
             />
@@ -137,10 +134,10 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   logo: {
-      width: "100%",
-      height: 70,
-      marginBottom: 20,
-      resizeMode: "contain", // Ensures the image maintains its aspect ratio
+    width: "100%",
+    height: 70,
+    marginBottom: 20,
+    resizeMode: "contain", // Ensures the image maintains its aspect ratio
   },
 });
 

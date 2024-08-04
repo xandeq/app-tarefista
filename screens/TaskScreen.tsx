@@ -1,29 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
 import { Text, TextInput, Button, Appbar } from "react-native-paper";
-import "firebase/analytics";
-import "firebase/auth";
-import "firebase/compat/firestore";
-import firebase from "firebase/compat/app";
-import {
-  collection,
-  addDoc,
-} from "firebase/firestore";
 import Animated, { SlideInUp } from "react-native-reanimated";
 import Icon from "react-native-vector-icons/Ionicons";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyC3tzna3npRAunU6vHulIXTX6-ALOYNMRg",
-  authDomain: "tarefista.firebaseapp.com",
-  projectId: "tarefista",
-  storageBucket: "tarefista.appspot.com",
-  messagingSenderId: "104050667822",
-  appId: "1:104050667822:web:515935d732fc3aaf228abf",
-  measurementId: "G-QJPPMWLBZY",
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
 
 interface TaskScreenProps {
   navigation: any;
@@ -32,27 +11,70 @@ interface TaskScreenProps {
 
 const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
   const [task, setTask] = useState<string>("");
+  const taskToEdit = route.params?.task;
 
-  const addTask = async () => {
+  useEffect(() => {
+    if (taskToEdit) {
+      setTask(taskToEdit.text);
+    }
+  }, [taskToEdit]);
+
+  const saveTask = async () => {
     if (task.trim() === "") {
       alert("Task cannot be empty");
       return;
     }
     try {
-      const timestamp = firebase.firestore.FieldValue.serverTimestamp();
-      const docRef = await addDoc(collection(db, "tasks"), {
-        text: task,
-        completed: false,
-        createdAt: timestamp,
-        updatedAt: timestamp,
-      });
-      console.log("Tarefa adicionada com sucesso: ", docRef.id);
-      if (route.params?.refreshTasks) {
-        route.params.refreshTasks();
+      let response;
+      if (taskToEdit) {
+        // Edit existing task
+        response = await fetch(
+          `https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks/${taskToEdit.id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              text: task,
+              completed: taskToEdit.completed,
+            }),
+          }
+        );
+      } else {
+        // Add new task
+        response = await fetch(
+          "https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              text: task,
+              completed: false,
+            }),
+          }
+        );
       }
-      navigation.goBack();
+
+      if (response.ok) {
+        const data = await response.json().catch(() => null);
+        if (data) {
+          console.log("Tarefa salva com sucesso: ", data.id);
+        } else {
+          console.log("Tarefa salva com sucesso, mas a resposta não era JSON.");
+        }
+        if (route.params?.refreshTasks) {
+          route.params.refreshTasks();
+        }
+        navigation.goBack();
+      } else {
+        const errorMessage = await response.text();
+        console.error("Erro ao salvar tarefa: ", errorMessage);
+      }
     } catch (error) {
-      console.error("Erro ao adicionar tarefa: ", error);
+      console.error("Erro ao salvar tarefa: ", error);
     }
   };
 
@@ -63,31 +85,39 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
     >
       <Appbar.Header>
         <Appbar.BackAction onPress={() => navigation.goBack()} />
-        <Appbar.Content title="Add Task" />
+        <Appbar.Content title={taskToEdit ? "Edit Task" : "Add Task"} />
       </Appbar.Header>
       <Animated.View entering={SlideInUp} style={styles.content}>
-        <Text variant="headlineLarge" style={styles.title}>New Task</Text>
+        <Text variant="headlineLarge" style={styles.title}>
+          {taskToEdit ? "Edit Task" : "New Task"}
+        </Text>
         <TextInput
           mode="outlined"
           label="Task description"
           style={styles.input}
           value={task}
           onChangeText={setTask}
-          theme={{ colors: { primary: '#0000ff' } }}
+          theme={{ colors: { primary: "#0000ff" } }}
         />
-        <Button 
-          mode="contained" 
-          onPress={addTask} 
+        <Button
+          mode="contained"
+          onPress={saveTask}
           style={styles.button}
-          icon={() => <Icon name="add-circle-outline" size={24} color="#fff" />}
+          icon={() => (
+            <Icon
+              name={taskToEdit ? "save" : "add-circle-outline"}
+              size={24}
+              color="#fff"
+            />
+          )}
           buttonColor="#0000ff"
         >
-          Add Task
+          {taskToEdit ? "Save Task" : "Add Task"}
         </Button>
       </Animated.View>
     </KeyboardAvoidingView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {

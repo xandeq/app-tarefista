@@ -2,38 +2,37 @@ import React, { useState } from "react";
 import { View, Text, TextInput, Button, StyleSheet } from "react-native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
-import { createUserWithEmailAndPassword, getAuth } from "firebase/auth";
 import { ParamListBase } from "@react-navigation/native";
-import RootStackParamList from "../App"; // Certifique-se de que isso aponta para o local correto onde RootStackParamList é definido
+import RootStackParamList from "../App"; // Ensure this points to the correct location where RootStackParamList is defined
 
 type RegisterScreenNavigationProp = NativeStackNavigationProp<
   ParamListBase,
   keyof typeof RootStackParamList
 >;
 
-const firebaseConfig = {
-  apiKey: "AIzaSyC3tzna3npRAunU6vHulIXTX6-ALOYNMRg",
-  authDomain: "tarefista.firebaseapp.com",
-  projectId: "tarefista",
-  storageBucket: "tarefista.appspot.com",
-  messagingSenderId: "104050667822",
-  appId: "1:104050667822:web:515935d732fc3aaf228abf",
-  measurementId: "G-QJPPMWLBZY",
-};
-
-export default function RegisterScreen() {
-  const app: any = initializeApp(firebaseConfig);
-  const auth: any = getAuth(app);
+const RegisterScreen: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigation = useNavigation<RegisterScreenNavigationProp>();
 
   const handleRegister = async () => {
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      navigation.navigate("Home");
+      const response = await fetch('https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+        navigation.navigate("Home");
+      } else {
+        const errorData = await response.json();
+        console.error("Registration failed: ", errorData);
+      }
     } catch (error) {
-      console.error(error);
+      console.error("Error during registration: ", error);
     }
   };
 
@@ -56,7 +55,7 @@ export default function RegisterScreen() {
       <Button title="Register" onPress={handleRegister} />
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -74,6 +73,5 @@ const styles = StyleSheet.create({
     padding: 10,
   },
 });
-function initializeApp(firebaseConfig: any): any {
-  throw new Error("Function not implemented.");
-}
+
+export default RegisterScreen;
