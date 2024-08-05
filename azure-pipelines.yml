@@ -13,7 +13,7 @@ steps:
 - script: npm install -g expo-cli
   displayName: 'Install Expo CLI'
 
-- script: npm install
+- script: npm install --legacy-peer-deps
   displayName: 'Install dependencies'
 
 - script: npm install --save-dev @expo/webpack-config --legacy-peer-deps
