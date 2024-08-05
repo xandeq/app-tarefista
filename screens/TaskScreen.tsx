@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { View, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
-import { Text, TextInput, Button, Appbar } from "react-native-paper";
+import { Text, TextInput, Button, Appbar, Snackbar } from "react-native-paper";
 import Animated, { SlideInUp } from "react-native-reanimated";
 import Icon from "react-native-vector-icons/Ionicons";
 
@@ -11,6 +11,8 @@ interface TaskScreenProps {
 
 const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
   const [task, setTask] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [visible, setVisible] = useState<boolean>(false);
   const taskToEdit = route.params?.task;
 
   useEffect(() => {
@@ -21,7 +23,8 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
 
   const saveTask = async () => {
     if (task.trim() === "") {
-      alert("Task cannot be empty");
+      setError("Task description cannot be empty");
+      setVisible(true);
       return;
     }
     try {
@@ -84,8 +87,7 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
       style={styles.container}
     >
       <Appbar.Header>
-        <Appbar.BackAction onPress={() => navigation.goBack()} />
-        <Appbar.Content title={taskToEdit ? "Edit Task" : "Add Task"} />
+        <Appbar.Action icon="close" onPress={() => navigation.goBack()} />
       </Appbar.Header>
       <Animated.View entering={SlideInUp} style={styles.content}>
         <Text variant="headlineLarge" style={styles.title}>
@@ -115,6 +117,14 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
           {taskToEdit ? "Save Task" : "Add Task"}
         </Button>
       </Animated.View>
+      <Snackbar
+        visible={visible}
+        onDismiss={() => setVisible(false)}
+        duration={3000}
+        style={styles.snackbar}
+      >
+        {error}
+      </Snackbar>
     </KeyboardAvoidingView>
   );
 };
@@ -146,6 +156,9 @@ const styles = StyleSheet.create({
     width: "100%",
     paddingVertical: 10,
     borderRadius: 8,
+  },
+  snackbar: {
+    backgroundColor: "#FF6F61",
   },
 });
 
