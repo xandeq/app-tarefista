@@ -97,7 +97,7 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
           style={styles.input}
           value={task}
           onChangeText={setTask}
-          theme={{ colors: { primary: "#0000ff" } }}
+          theme={{ colors: { primary: "#FF6F61" } }} // Changed to a color from the logo
         />
         <Button
           mode="contained"
@@ -110,7 +110,7 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
               color="#fff"
             />
           )}
-          buttonColor="#0000ff"
+          buttonColor="#FF6F61" // Changed to a color from the logo
         >
           {taskToEdit ? "Save Task" : "Add Task"}
         </Button>
@@ -132,13 +132,15 @@ const styles = StyleSheet.create({
   },
   title: {
     marginBottom: 20,
-    color: "#0000ff",
+    color: "#FF6F61", // Changed to a color from the logo
     fontSize: 24,
+    fontWeight: "bold",
   },
   input: {
     width: "100%",
     marginBottom: 20,
     borderRadius: 8,
+    backgroundColor: "#fff",
   },
   button: {
     width: "100%",
