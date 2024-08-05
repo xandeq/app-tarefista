@@ -14,13 +14,6 @@ steps:
     npm install
   displayName: 'Install dependencies'
 
-# If you're building for iOS
-- script: |
-    cd ios
-    pod install
-  displayName: 'Install CocoaPods dependencies'
-  condition: eq(variables['Build.SourceBranchName'], 'master')
-
 # Build the project
 - script: |
     npm run build
