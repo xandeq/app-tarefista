@@ -7,7 +7,7 @@ pool:
 steps:
 - task: NodeTool@0
   inputs:
-    versionSpec: '14.x'
+    versionSpec: '20.x'  # Atualize para a versão 20.x do Node.js
   displayName: 'Install Node.js'
 
 - script: npm install -g expo-cli
