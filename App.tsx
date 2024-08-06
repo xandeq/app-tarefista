@@ -40,7 +40,11 @@ function MainTabs() {
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} options={{ headerTitle: "Hoje" }} />
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{ headerTitle: "Hoje" }}
+      />
       <Tab.Screen name="Tasks" component={TaskScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
@@ -54,8 +58,8 @@ const App: React.FC = () => {
         initialRouteName="Main"
         screenOptions={{ headerTitleAlign: "center" }} // Centralizar título em todas as telas
       >
-        <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Register" component={RegisterScreen} />
+        <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen
           name="Main"
           component={MainTabs}
