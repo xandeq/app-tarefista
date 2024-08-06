@@ -1,0 +1,25 @@
+trigger:
+  branches:
+    include:
+      - master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  azure_devops_repo: 'https://alexandrequeiroz.visualstudio.com/Tarefista/_git/app-tarefista'
+  github_repo: 'https://github.com/xandeq/app-tarefista.git'
+  pat: $(AZURE_DEVOPS_PAT)
+
+steps:
+- checkout: self
+
+- script: |
+    echo "Setting up Git configuration..."
+    git config --global user.email "xandeq@gmail.com"
+    git config --global user.name "Alexandre Queiroz"
+    git remote add azure_devops $(azure_devops_repo)
+    git push azure_devops master
+  displayName: 'Sync GitHub with Azure DevOps'
+  env:
+    AZURE_DEVOPS_PAT: $(AZURE_DEVOPS_PAT)
