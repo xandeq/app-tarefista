@@ -3,6 +3,8 @@ import { View, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
 import { Text, TextInput, Button, Appbar, Snackbar } from "react-native-paper";
 import Animated, { SlideInUp } from "react-native-reanimated";
 import Icon from "react-native-vector-icons/Ionicons";
+import "firebase/compat/firestore";
+import firebase from "firebase/compat/app";
 
 interface TaskScreenProps {
   navigation: any;
@@ -46,6 +48,9 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
         );
       } else {
         // add new task
+        const timestamp = new Date().toISOString(); // Declare and initialize the 'timestamp' variable
+        //const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+        console.log("Timestamp: ", timestamp);
         response = await fetch(
           "https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks",
           {
@@ -56,6 +61,8 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
             body: JSON.stringify({
               text: task,
               completed: false,
+              createdAt: timestamp,
+              updatedAt: timestamp,
             }),
           }
         );
