@@ -24,7 +24,7 @@ function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        headerTitleAlign: "center", // Centraliza o título para todas as telas
+        headerTitleAlign: "center",
         tabBarIcon: ({ color, size }) => {
           let iconName: string;
           if (route.name === "Home") {
@@ -47,6 +47,7 @@ function MainTabs() {
       />
       <Tab.Screen name="Tasks" component={TaskScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="Login" component={LoginScreen} />
     </Tab.Navigator>
   );
 }
@@ -56,7 +57,7 @@ const App: React.FC = () => {
     <NavigationContainer>
       <Stack.Navigator
         initialRouteName="Main"
-        screenOptions={{ headerTitleAlign: "center" }} // Centralizar título em todas as telas
+        screenOptions={{ headerTitleAlign: "center" }}
       >
         <Stack.Screen name="Register" component={RegisterScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />

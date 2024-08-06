@@ -1,15 +1,11 @@
 import React, { useState } from "react";
 import { View, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
 import { Text, TextInput, Button, Snackbar } from "react-native-paper";
-import { ParamListBase, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from '../types'; // Importe as tipagens
 
-const navigation = useNavigation<RegisterScreenNavigationProp>();
-
-type RegisterScreenNavigationProp = NativeStackNavigationProp<
-  ParamListBase,
-  'Home'
->;
+type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
 
 const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState<string>("");
@@ -17,7 +13,7 @@ const LoginScreen: React.FC = () => {
   const [error, setError] = useState<string>("");
   const [visible, setVisible] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-  const navigation = useNavigation();
+  const navigation = useNavigation<LoginScreenNavigationProp>();
 
   const loginUser = async () => {
     if (email.trim() === "" || password.trim() === "") {
@@ -39,7 +35,7 @@ const LoginScreen: React.FC = () => {
       );
       if (response.ok) {
         setLoading(false);
-        navigation.navigate("Home" as never);
+        navigation.navigate("Home");
       } else {
         const errorMessage = await response.text();
         setError(errorMessage);

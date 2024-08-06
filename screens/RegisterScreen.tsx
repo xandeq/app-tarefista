@@ -1,15 +1,11 @@
 import React, { useState } from "react";
 import { View, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
 import { Text, TextInput, Button, Snackbar } from "react-native-paper";
-import { ParamListBase, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useNavigation } from '@react-navigation/native';
+import { RootStackParamList } from '../types'; // Importe as tipagens
+import { StackNavigationProp } from "@react-navigation/stack";
 
-const navigation = useNavigation<RegisterScreenNavigationProp>();
-
-type RegisterScreenNavigationProp = NativeStackNavigationProp<
-  ParamListBase,
-  'Login'
->;
+type RegisterScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Register'>;
 
 const RegisterScreen: React.FC = () => {
   const [email, setEmail] = useState<string>("");
@@ -17,6 +13,7 @@ const RegisterScreen: React.FC = () => {
   const [error, setError] = useState<string>("");
   const [visible, setVisible] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const navigation = useNavigation<RegisterScreenNavigationProp>();
 
   const registerUser = async () => {
     if (email.trim() === "" || password.trim() === "") {
