@@ -2,6 +2,7 @@ trigger:
   branches:
     include:
       - master
+      - main
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -16,10 +17,21 @@ steps:
 
 - script: |
     echo "Setting up Git configuration..."
-    git config --global user.email "xandeq@gmail.com"
-    git config --global user.name "Alexandre Queiroz"
+    git config --global user.email "you@example.com"
+    git config --global user.name "Your Name"
+
+    # Check if branch master exists, if not check main
+    if git show-ref --quiet refs/heads/master; then
+      branch=master
+    elif git show-ref --quiet refs/heads/main; then
+      branch=main
+    else
+      echo "Neither master nor main branch found."
+      exit 1
+    fi
+
     git remote add azure_devops $(azure_devops_repo)
-    git push azure_devops master
+    git push azure_devops $branch
   displayName: 'Sync GitHub with Azure DevOps'
   env:
     AZURE_DEVOPS_PAT: $(AZURE_DEVOPS_PAT)
