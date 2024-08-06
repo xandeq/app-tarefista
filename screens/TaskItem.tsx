@@ -39,11 +39,10 @@ const TaskItem: React.FC<TaskItemProps> = ({
         onRemove(taskId);
         refreshTasks();
       } else {
-        console.error("Erro ao remover tarefa: ", await response.text());
+        console.error("Error removing task: ", await response.text());
       }
     } catch (error) {
-      console.log("onPress error: ", taskId);
-      console.error("Erro ao remover tarefa: ", error);
+      console.error("Error removing task: ", error);
     }
   };
 
@@ -62,10 +61,10 @@ const TaskItem: React.FC<TaskItemProps> = ({
       if (response.ok) {
         refreshTasks();
       } else {
-        console.error("Erro ao atualizar tarefa: ", await response.text());
+        console.error("Error updating task: ", await response.text());
       }
     } catch (error) {
-      console.error("Erro ao atualizar tarefa: ", error);
+      console.error("Error updating task: ", error);
     }
   };
 

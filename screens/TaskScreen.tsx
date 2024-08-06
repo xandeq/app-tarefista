@@ -29,10 +29,14 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
       setVisible(true);
       return;
     }
+    const timestamp = new Date().toISOString();
     try {
       let response;
       if (taskToEdit) {
         // Edit existing task
+        console.log("Timestamp: ", timestamp);
+        console.log("Task: ", taskToEdit);
+        console.log("taskToEdit.text: ", taskToEdit.text);
         response = await fetch(
           `https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks/${taskToEdit.id}`,
           {
@@ -43,14 +47,15 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
             body: JSON.stringify({
               text: task,
               completed: taskToEdit.completed,
+              createdAt: taskToEdit.createdAt,
+              updatedAt: timestamp,
             }),
           }
         );
       } else {
         // add new task
-        const timestamp = new Date().toISOString(); // Declare and initialize the 'timestamp' variable
-        //const timestamp = firebase.firestore.FieldValue.serverTimestamp();
         console.log("Timestamp: ", timestamp);
+        console.log("Task: ", task);
         response = await fetch(
           "https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks",
           {
