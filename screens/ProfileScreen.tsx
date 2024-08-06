@@ -14,7 +14,7 @@ import { ParamListBase } from "@react-navigation/native";
 
 type RegisterScreenNavigationProp = NativeStackNavigationProp<
   ParamListBase,
-  'Login'
+  'Register'
 >;
 
 const AuthContext = createContext<{
@@ -53,6 +53,10 @@ const ProfileScreen: React.FC = () => {
     setIsEditing(false);
   };
 
+  const handleNavigateToRegister = () => {
+    navigation.navigate("Register");
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Perfil</Text>
@@ -76,6 +80,9 @@ const ProfileScreen: React.FC = () => {
       )}
       <TouchableOpacity onPress={handleSignOut} style={styles.logoutButton}>
         <Text style={styles.logoutButtonText}>Sair</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={handleNavigateToRegister} style={styles.registerButton}>
+        <Text style={styles.registerButtonText}>Registrar</Text>
       </TouchableOpacity>
     </View>
   );
@@ -118,6 +125,16 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   logoutButtonText: {
+    color: "#fff",
+    fontSize: 16,
+  },
+  registerButton: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: "blue",
+    borderRadius: 5,
+  },
+  registerButtonText: {
     color: "#fff",
     fontSize: 16,
   },

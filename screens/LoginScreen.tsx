@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { View, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
+import { View, StyleSheet, KeyboardAvoidingView, Platform, TouchableOpacity } from "react-native";
 import { Text, TextInput, Button, Snackbar } from "react-native-paper";
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from '../types'; // Importe as tipagens
+import { StackNavigationProp } from "@react-navigation/stack";
 
-type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
+type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
 const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState<string>("");
@@ -35,7 +35,7 @@ const LoginScreen: React.FC = () => {
       );
       if (response.ok) {
         setLoading(false);
-        navigation.navigate("Home");
+        navigation.navigate("Main");
       } else {
         const errorMessage = await response.text();
         setError(errorMessage);
@@ -47,6 +47,10 @@ const LoginScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleNavigateToRegister = () => {
+    navigation.navigate("Register");
   };
 
   return (
@@ -93,6 +97,9 @@ const LoginScreen: React.FC = () => {
         >
           {error}
         </Snackbar>
+        <TouchableOpacity onPress={handleNavigateToRegister} style={styles.registerButton}>
+          <Text style={styles.registerButtonText}>Registrar</Text>
+        </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
   );
@@ -127,6 +134,16 @@ const styles = StyleSheet.create({
   },
   snackbar: {
     backgroundColor: "#FF6F61",
+  },
+  registerButton: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: "blue",
+    borderRadius: 5,
+  },
+  registerButtonText: {
+    color: "#fff",
+    fontSize: 16,
   },
 });
 

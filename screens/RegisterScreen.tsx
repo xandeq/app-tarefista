@@ -1,15 +1,15 @@
 import React, { useState } from "react";
 import { View, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
 import { Text, TextInput, Button, Snackbar } from "react-native-paper";
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, StackNavigationProp } from '@react-navigation/native';
 import { RootStackParamList } from '../types'; // Importe as tipagens
-import { StackNavigationProp } from "@react-navigation/stack";
 
 type RegisterScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Register'>;
 
 const RegisterScreen: React.FC = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [displayName, setDisplayName] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [visible, setVisible] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -30,7 +30,7 @@ const RegisterScreen: React.FC = () => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ email, password, displayName }),
         }
       );
       if (response.ok) {
@@ -41,7 +41,7 @@ const RegisterScreen: React.FC = () => {
         setError(errorMessage);
         setVisible(true);
       }
-    } catch (error: any) {
+    } catch (error) {
       setError("Error registering user: " + error.message);
       setVisible(true);
     } finally {
@@ -56,6 +56,14 @@ const RegisterScreen: React.FC = () => {
     >
       <View style={styles.content}>
         <Text style={styles.title}>Register</Text>
+        <TextInput
+          mode="outlined"
+          label="Display Name"
+          style={styles.input}
+          value={displayName}
+          onChangeText={setDisplayName}
+          theme={{ colors: { primary: "#FF6F61" } }}
+        />
         <TextInput
           mode="outlined"
           label="Email"
