@@ -2,11 +2,14 @@ import React from "react";
 import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import Animated, { SlideInLeft, SlideOutRight } from "react-native-reanimated";
+import { Audio } from "expo-av";
 
 interface Task {
   id: string;
   text: string;
   completed: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface TaskItemProps {
@@ -55,10 +58,18 @@ const TaskItem: React.FC<TaskItemProps> = ({
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ completed: !task.completed }),
+          body: JSON.stringify({
+            text: task.text, // Ensure text is passed correctly
+            completed: !task.completed,
+            createdAt: task.createdAt,
+            updatedAt: new Date().toISOString(),
+          }),
         }
       );
       if (response.ok) {
+        if (!task.completed) {
+          playSound();
+        }
         refreshTasks();
       } else {
         console.error("Error updating task: ", await response.text());
@@ -66,6 +77,13 @@ const TaskItem: React.FC<TaskItemProps> = ({
     } catch (error) {
       console.error("Error updating task: ", error);
     }
+  };
+
+  const playSound = async () => {
+    const { sound } = await Audio.Sound.createAsync(
+       require('../assets/taskcompleted.wav')
+    );
+    await sound.playAsync();
   };
 
   const handleEdit = () => {
@@ -86,7 +104,10 @@ const TaskItem: React.FC<TaskItemProps> = ({
             color={task.completed ? "green" : "gray"}
           />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => onEdit(task)} style={styles.taskContent}>
+        <TouchableOpacity
+          onPress={() => onEdit(task)}
+          style={styles.taskContent}
+        >
           <Text
             style={[
               styles.taskText,
