@@ -5,6 +5,7 @@ import Animated, { SlideInUp } from "react-native-reanimated";
 import Icon from "react-native-vector-icons/Ionicons";
 import "firebase/compat/firestore";
 import firebase from "firebase/compat/app";
+import { showNotification } from '../PushNotification';
 
 interface TaskScreenProps {
   navigation: any;
@@ -77,6 +78,7 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
         const data = await response.json().catch(() => null);
         if (data) {
           console.log("Tarefa salva com sucesso: ", data.id);
+          showNotification("Task Created", `Task "${task}" has been created.`);
         } else {
           console.log("Tarefa salva com sucesso, mas a resposta não era JSON.");
         }
