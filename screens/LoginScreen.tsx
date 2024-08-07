@@ -4,6 +4,7 @@ import { Text, TextInput, Button, Snackbar } from "react-native-paper";
 import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../types'; // Importe as tipagens
 import { StackNavigationProp } from "@react-navigation/stack";
+import Toast from 'react-native-toast-message';
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -17,6 +18,11 @@ const LoginScreen: React.FC = () => {
 
   const loginUser = async () => {
     if (email.trim() === "" || password.trim() === "") {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Email and password cannot be empty'
+      });
       setError("Email and password cannot be empty");
       setVisible(true);
       return;
@@ -35,13 +41,28 @@ const LoginScreen: React.FC = () => {
       );
       if (response.ok) {
         setLoading(false);
+        Toast.show({
+          type: 'success',
+          text1: 'Success',
+          text2: 'Logged in successfully'
+        });
         navigation.navigate("Main");
       } else {
         const errorMessage = await response.text();
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: errorMessage
+        });
         setError(errorMessage);
         setVisible(true);
       }
     } catch (error: any) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Error logging in: ' + error.message
+      });
       setError("Error logging in: " + error.message);
       setVisible(true);
     } finally {

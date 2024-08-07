@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { View, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
 import { Text, TextInput, Button, Snackbar } from "react-native-paper";
-import { useNavigation, StackNavigationProp } from '@react-navigation/native';
-import { RootStackParamList } from '../types'; // Importe as tipagens
+import { useNavigation } from '@react-navigation/native';
+import { RootStackParamList } from '../types'; 
+import Toast from 'react-native-toast-message';
+import { StackNavigationProp } from "@react-navigation/stack";
 
 type RegisterScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Register'>;
 
@@ -17,6 +19,11 @@ const RegisterScreen: React.FC = () => {
 
   const registerUser = async () => {
     if (email.trim() === "" || password.trim() === "") {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Email and password cannot be empty'
+      });
       setError("Email and password cannot be empty");
       setVisible(true);
       return;
@@ -35,13 +42,28 @@ const RegisterScreen: React.FC = () => {
       );
       if (response.ok) {
         setLoading(false);
+        Toast.show({
+          type: 'success',
+          text1: 'Success',
+          text2: 'User registered successfully'
+        });
         navigation.navigate("Login");
       } else {
         const errorMessage = await response.text();
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: errorMessage
+        });
         setError(errorMessage);
         setVisible(true);
       }
-    } catch (error) {
+    } catch (error: any) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Error registering user: ' + error.message
+      });
       setError("Error registering user: " + error.message);
       setVisible(true);
     } finally {

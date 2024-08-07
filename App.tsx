@@ -9,6 +9,7 @@ import ProfileScreen from "./screens/ProfileScreen";
 import TaskScreen from "./screens/TaskScreen";
 import Icon from "react-native-vector-icons/Ionicons";
 import "react-native-reanimated";
+import Toast from "react-native-toast-message";
 
 type RootStackParamList = {
   Login: undefined;
@@ -68,6 +69,7 @@ const App: React.FC = () => {
         />
         <Stack.Screen name="Task" component={TaskScreen} />
       </Stack.Navigator>
+      <Toast /> 
     </NavigationContainer>
   );
 };
