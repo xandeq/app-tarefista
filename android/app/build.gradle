@@ -83,7 +83,7 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.tarefista"
+    namespace 'com.xandeq.Tarefista'
     defaultConfig {
         applicationId 'com.xandeq.Tarefista'
         minSdkVersion rootProject.ext.minSdkVersion
