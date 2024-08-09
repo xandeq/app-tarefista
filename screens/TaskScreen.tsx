@@ -142,7 +142,7 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#FFE5B4",
   },
   content: {
     flex: 1,

@@ -81,7 +81,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
 
   const playSound = async () => {
     const { sound } = await Audio.Sound.createAsync(
-       require('../assets/taskcompleted.wav')
+      require("../assets/taskcompleted.wav")
     );
     await sound.playAsync();
   };
@@ -155,6 +155,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     flex: 1,
     marginLeft: 10,
+    fontWeight: "bold",
   },
   taskTextCompleted: {
     textDecorationLine: "line-through",

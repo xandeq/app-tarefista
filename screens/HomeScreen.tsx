@@ -85,7 +85,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
 
   return (
     <View style={styles.container}>
-      <Image source={logo} style={styles.logo} />
       <Animated.View style={[styles.addButton, animatedStyle]}>
         <TouchableOpacity
           onPressIn={handlePressIn}
