@@ -21,9 +21,10 @@ const logo = require("../assets/logo.png");
 
 interface HomeScreenProps {
   navigation: any;
+  route: any;
 }
 
-const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
+const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [taskToEdit, setTaskToEdit] = useState<any | null>(null);
@@ -48,8 +49,17 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   };
 
   useEffect(() => {
+    // Carrega as tarefas ao iniciar o aplicativo
     fetchTasks();
-  }, []);
+
+    // Adiciona um listener para recarregar as tarefas quando a tela ganha o foco
+    const unsubscribe = navigation.addListener("focus", () => {
+      fetchTasks();
+    });
+
+    // Limpeza do listener ao desmontar o componente
+    return unsubscribe;
+  }, [navigation]);
 
   const handleRemoveTask = (taskId: string) => {
     console.log("handleRemoveTask Removing task with id: ", taskId);
@@ -70,7 +80,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   };
   const handleEditTask = (task: any) => {
     setTaskToEdit(task);
-    navigation.navigate("Task", { task, refreshTasks: fetchTasks });
+    navigation.navigate("Task", { taskId: task.id });
   };
 
   return (
@@ -80,9 +90,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         <TouchableOpacity
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
-          onPress={() =>
-            navigation.navigate("Task", { refreshTasks: fetchTasks })
-          }
+          onPress={() => navigation.navigate("Task", { taskId: null })}
         >
           <Icon name="add-circle" size={56} color="#FFFFFF" />
         </TouchableOpacity>

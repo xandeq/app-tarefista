@@ -18,10 +18,10 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
   const taskToEdit = route.params?.task;
 
   useEffect(() => {
-    if (taskToEdit) {
-      setTask(taskToEdit.text);
+    if (route.params?.task) {
+      setTask(route.params.task.text);
     }
-  }, [taskToEdit]);
+  }, [route.params?.task]);
 
   const saveTask = async () => {
     if (task.trim() === "") {
@@ -75,15 +75,13 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
 
       if (response.ok) {
         const data = await response.json().catch(() => null);
-        if (data) {
+        if (response.ok) {
           console.log("Tarefa salva com sucesso: ", data.id);
+          navigation.navigate("Home", { taskUpdated: true }); // Sinalizando que uma tarefa foi atualizada
         } else {
-          console.log("Tarefa salva com sucesso, mas a resposta não era JSON.");
+          const errorMessage = await response.text();
+          console.error("Erro ao salvar tarefa: ", errorMessage);
         }
-        if (route.params?.refreshTasks) {
-          route.params.refreshTasks();
-        }
-        navigation.goBack();
       } else {
         const errorMessage = await response.text();
         console.error("Erro ao salvar tarefa: ", errorMessage);
@@ -111,7 +109,7 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
           style={styles.input}
           value={task}
           onChangeText={setTask}
-          theme={{ colors: { primary: "#FF6F61" } }} // Changed to a color from the logo
+          theme={{ colors: { primary: "#FF6F61" } }}
         />
         <Button
           mode="contained"

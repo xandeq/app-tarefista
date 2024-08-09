@@ -35,7 +35,7 @@ function MainTabs() {
           } else if (route.name === "Profile") {
             iconName = "person";
           } else {
-            iconName = "circle";
+            iconName = "radio-button-on";
           }
           return <Icon name={iconName} size={size} color={color} />;
         },
