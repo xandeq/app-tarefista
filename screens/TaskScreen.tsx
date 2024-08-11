@@ -1,10 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { View, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
+import {
+  View,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+} from "react-native";
 import { Text, TextInput, Button, Appbar, Snackbar } from "react-native-paper";
 import Animated, { SlideInUp } from "react-native-reanimated";
 import Icon from "react-native-vector-icons/Ionicons";
 import "firebase/compat/firestore";
 import firebase from "firebase/compat/app";
+import { getTaskCount, incrementTaskCount } from '../utils/taskTracker';
 
 interface TaskScreenProps {
   navigation: any;
@@ -28,6 +35,14 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
       setError("Task description cannot be empty");
       setVisible(true);
       return;
+    }
+    if (!taskToEdit) {
+      // Check if user is unregistered and limit exceeded
+      const taskCount = await getTaskCount();
+      if (taskCount >= 10) {
+        Alert.alert('Limite Atingido', 'Você pode adicionar apenas 10 tarefas por dia.');
+        return;
+      }
     }
     const timestamp = new Date().toISOString();
     try {
@@ -74,6 +89,7 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
       }
 
       if (response.ok) {
+        await incrementTaskCount();
         const data = await response.json().catch(() => null);
         if (response.ok) {
           console.log("Tarefa salva com sucesso: ", data.id);
@@ -91,6 +107,37 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
     }
   };
 
+  const deleteTask = async () => {
+    try {
+      const response = await fetch(
+        `https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks/${taskToEdit.id}`,
+        {
+          method: "DELETE",
+        }
+      );
+      if (response.ok) {
+        route.params?.refreshTasks();
+        navigation.goBack();
+      } else {
+        console.error("Erro ao deletar tarefa: ", await response.text());
+      }
+    } catch (error) {
+      console.error("Erro ao deletar tarefa: ", error);
+    }
+  };
+
+  const confirmDelete = () => {
+    Alert.alert(
+      "Confirmação",
+      "Você tem certeza que deseja deletar esta tarefa?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        { text: "Deletar", style: "destructive", onPress: deleteTask },
+      ],
+      { cancelable: true }
+    );
+  };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -98,6 +145,9 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
     >
       <Appbar.Header>
         <Appbar.Action icon="close" onPress={() => navigation.goBack()} />
+        {taskToEdit && (
+          <Appbar.Action icon="trash-can" onPress={confirmDelete} color="red" />
+        )}
       </Appbar.Header>
       <Animated.View entering={SlideInUp} style={styles.content}>
         <Text variant="headlineLarge" style={styles.title}>
