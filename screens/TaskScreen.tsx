@@ -11,7 +11,8 @@ import Animated, { SlideInUp } from "react-native-reanimated";
 import Icon from "react-native-vector-icons/Ionicons";
 import "firebase/compat/firestore";
 import firebase from "firebase/compat/app";
-import { getTaskCount, incrementTaskCount } from '../utils/taskTracker';
+import { getTaskCount, incrementTaskCount } from "../utils/taskTracker";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface TaskScreenProps {
   navigation: any;
@@ -40,17 +41,21 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
       // Check if user is unregistered and limit exceeded
       const taskCount = await getTaskCount();
       if (taskCount >= 10) {
-        Alert.alert('Limite Atingido', 'Você pode adicionar apenas 10 tarefas por dia.');
+        Alert.alert(
+          "Limite Atingido",
+          "Você pode adicionar apenas 10 tarefas por dia."
+        );
         return;
       }
     }
+    const tempUserId = await AsyncStorage.getItem("tempUserId");
     const timestamp = new Date().toISOString();
     try {
       let response;
       if (taskToEdit) {
         // Edit existing task
         console.log("Timestamp: ", timestamp);
-        console.log("Task: ", taskToEdit);
+        console.log("Task 1: ", taskToEdit);
         console.log("taskToEdit.text: ", taskToEdit.text);
         response = await fetch(
           `https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks/${taskToEdit.id}`,
@@ -64,13 +69,14 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
               completed: taskToEdit.completed,
               createdAt: taskToEdit.createdAt,
               updatedAt: timestamp,
+              tempUserId: tempUserId,
             }),
           }
         );
       } else {
         // add new task
         console.log("Timestamp: ", timestamp);
-        console.log("Task: ", task);
+        console.log("Task 2: ", task);
         response = await fetch(
           "https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks",
           {
@@ -83,27 +89,45 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
               completed: false,
               createdAt: timestamp,
               updatedAt: timestamp,
+              tempUserId: tempUserId,
             }),
           }
         );
       }
 
       if (response.ok) {
+        console.log("response: ", response);
+        const tempUserId = await AsyncStorage.getItem("tempUserId");
         await incrementTaskCount();
-        const data = await response.json().catch(() => null);
+        // Tente converter diretamente para JSON
+        const text = await response.text();
+        let data;
+        try {
+          // Tentativa de converter para JSON
+          data = await response.json();
+          console.log("Dados JSON:", data);
+        } catch (error) {
+          // Se a conversão para JSON falhar, trate como texto simples
+          console.error("Erro ao analisar JSON:", error);
+          const text = await response.text(); // Esse erro "Already read" acontece se tentarmos ler o corpo da resposta novamente
+          console.log("Resposta como texto:", text);
+        }
+
+        if (!tempUserId && data.tempUserId) {
+          await AsyncStorage.setItem("tempUserId", data.tempUserId);
+        }
         if (response.ok) {
-          console.log("Tarefa salva com sucesso: ", data.id);
           navigation.navigate("Home", { taskUpdated: true }); // Sinalizando que uma tarefa foi atualizada
         } else {
           const errorMessage = await response.text();
-          console.error("Erro ao salvar tarefa: ", errorMessage);
+          console.error("Erro ao salvar tarefa 1: ", errorMessage);
         }
       } else {
         const errorMessage = await response.text();
-        console.error("Erro ao salvar tarefa: ", errorMessage);
+        console.error("Erro ao salvar tarefa 2: ", errorMessage);
       }
     } catch (error) {
-      console.error("Erro ao salvar tarefa: ", error);
+      console.error("Erro ao salvar tarefa 3: ", error);
     }
   };
 
@@ -116,7 +140,9 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
         }
       );
       if (response.ok) {
-        route.params?.refreshTasks();
+        if (typeof route.params?.refreshTasks === "function") {
+          route.params.refreshTasks();
+        }
         navigation.goBack();
       } else {
         console.error("Erro ao deletar tarefa: ", await response.text());

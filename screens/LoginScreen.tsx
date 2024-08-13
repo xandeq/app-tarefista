@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../types'; // Importe as tipagens
 import { StackNavigationProp } from "@react-navigation/stack";
 import Toast from 'react-native-toast-message';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -39,6 +40,10 @@ const LoginScreen: React.FC = () => {
           body: JSON.stringify({ email, password }),
         }
       );
+      const responseData = await response.json();
+      if (responseData.token) {
+        await AsyncStorage.setItem('authToken', responseData.token);
+      }
       if (response.ok) {
         setLoading(false);
         Toast.show({

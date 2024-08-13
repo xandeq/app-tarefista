@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
-  Text,
   View,
   FlatList,
   ActivityIndicator,
   TouchableOpacity,
-  Image,
 } from "react-native";
 import TaskItem from "./TaskItem";
 import Icon from "react-native-vector-icons/Ionicons";
@@ -15,9 +13,8 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from "react-native-reanimated";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-
-const logo = require("../assets/logo.png");
 
 interface HomeScreenProps {
   navigation: any;
@@ -27,16 +24,37 @@ interface HomeScreenProps {
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [taskToEdit, setTaskToEdit] = useState<any | null>(null);
+  const [userId, setUserId] = useState<string | null>(null); // Declare the 'userId' variable
 
-  const fetchTasks = async () => {
+  // Função para buscar as tarefas do usuário
+  const fetchTasks = async (userId: string) => {
     try {
+      let token = await AsyncStorage.getItem("authToken");
+
+      if (!token) {
+        console.log("Token fetchTasks is null, using tempUserId instead");
+        token = await AsyncStorage.getItem("tempUserId");
+      }
+
+      if (!token) {
+        console.error("No authToken or tempUserId found, cannot fetch tasks");
+        return;
+      }
+
+      console.log("Token fetchTasks:", token);
+
       const response = await axios.get(
-        "https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks"
+        "https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks",
+        {
+          // headers: {
+          //   Authorization: `Bearer ${token}`,
+          // },
+          params: { tempUserId: userId }, // Pass the userId or tempUserId here
+        }
       );
+
       if (response.data) {
-        console.log(response.data);
-        //const tasksData = await response.json();
+        console.log("Tasks fetched:", response.data);
         setTasks(response.data);
       } else {
         console.error("Error fetching tasks:", response.statusText);
@@ -48,23 +66,87 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
     }
   };
 
-  useEffect(() => {
-    // Carrega as tarefas ao iniciar o aplicativo
-    fetchTasks();
+  const saveTasks = async (updatedTasks: any[]) => {
+    try {
+      await AsyncStorage.setItem("tasks", JSON.stringify(updatedTasks));
+      setTasks(updatedTasks);
+    } catch (error) {
+      console.error("Error saving tasks:", error);
+    }
+  };
 
-    // Adiciona um listener para recarregar as tarefas quando a tela ganha o foco
+  // Função para obter o userId do AsyncStorage ou da API
+  const fetchUserId = async () => {
+    try {
+      console.log("fetchUserId HOME");
+      // Primeiro, verifique se o userId já está no AsyncStorage
+      let storedUserId = await AsyncStorage.getItem("tempUserId");
+      if (storedUserId) {
+        console.log("User ID found in AsyncStorage:", storedUserId);
+        setUserId(storedUserId);
+        return storedUserId;
+      }
+
+      // Se o userId não estiver armazenado, busque o authToken
+      const token = await AsyncStorage.getItem("authToken");
+      if (!token) {
+        console.log("No authToken found in AsyncStorage");
+        return null;
+      }
+      console.log("Token fetchUserId:", token);
+
+      // Faça a chamada à API para obter o userId
+      const response = await fetch(
+        "https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/userId",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("User ID from API:", data.userId);
+
+        // Armazene o userId no AsyncStorage para uso futuro
+        await AsyncStorage.setItem("tempUserId", data.userId);
+        setUserId(data.userId);
+        return data.userId;
+      } else {
+        console.error("Error fetching user ID:", await response.text());
+        return null;
+      }
+    } catch (error) {
+      console.error("Error fetching user ID:", error);
+      return null;
+    }
+  };
+
+  // useEffect para carregar o userId e as tarefas ao montar o componente
+  useEffect(() => {
+    console.log("useEffect HomeScreen");
+    const loadUserIdAndTasks = async () => {
+      const fetchedUserId = await fetchUserId();
+      console.log("fetchedUserId:", fetchedUserId);
+      if (fetchedUserId) {
+        await fetchTasks(fetchedUserId); // Chama fetchTasks com o userId obtido
+      }
+    };
+
+    //if (route.params?.taskUpdated) {
+    loadUserIdAndTasks();
+    //}
+
     const unsubscribe = navigation.addListener("focus", () => {
-      fetchTasks();
+      if (userId) {
+        fetchTasks(userId); // Chama fetchTasks com o userId do estado
+      }
     });
 
-    // Limpeza do listener ao desmontar o componente
     return unsubscribe;
-  }, [navigation]);
-
-  const handleRemoveTask = (taskId: string) => {
-    console.log("handleRemoveTask Removing task with id: ", taskId);
-    setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
-  };
+  }, [navigation, userId, route.params?.taskUpdated]);
 
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => {
@@ -72,15 +154,28 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
       transform: [{ scale: scale.value }],
     };
   });
+
   const handlePressIn = () => {
     scale.value = withSpring(0.9);
   };
+
   const handlePressOut = () => {
     scale.value = withSpring(1);
   };
+
   const handleEditTask = (task: any) => {
-    setTaskToEdit(task);
-    navigation.navigate("Task", { taskId: task.id });
+    navigation.navigate("Task", { task: task });
+  };
+
+  const handleRemoveTask = (taskId: string) => {
+    console.log("handleRemoveTask Removing task with id: ", taskId);
+    setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
+  };
+
+  const handleLogout = async () => {
+    await AsyncStorage.removeItem("authToken");
+    console.log("authToken removido do AsyncStorage");
+    // Redirecione o usuário para a tela de login ou inicial
   };
 
   return (
@@ -106,7 +201,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
               task={item}
               onEdit={handleEditTask}
               onRemove={handleRemoveTask}
-              refreshTasks={fetchTasks}
+              refreshTasks={() => fetchTasks(userId!)}
             />
           )}
         />
