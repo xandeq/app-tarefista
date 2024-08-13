@@ -100,7 +100,6 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
         const tempUserId = await AsyncStorage.getItem("tempUserId");
         await incrementTaskCount();
         // Tente converter diretamente para JSON
-        const text = await response.text();
         let data;
         try {
           // Tentativa de converter para JSON
@@ -109,8 +108,6 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
         } catch (error) {
           // Se a conversão para JSON falhar, trate como texto simples
           console.error("Erro ao analisar JSON:", error);
-          const text = await response.text(); // Esse erro "Already read" acontece se tentarmos ler o corpo da resposta novamente
-          console.log("Resposta como texto:", text);
         }
 
         if (!tempUserId && data.tempUserId) {
