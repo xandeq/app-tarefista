@@ -9,6 +9,7 @@ import ProfileScreen from "./screens/ProfileScreen";
 import TaskScreen from "./screens/TaskScreen";
 import Icon from "react-native-vector-icons/Ionicons";
 import "react-native-reanimated";
+import Toast from "react-native-toast-message";
 
 type RootStackParamList = {
   Login: undefined;
@@ -24,7 +25,7 @@ function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        headerTitleAlign: "center", // Centraliza o título para todas as telas
+        headerTitleAlign: "center",
         tabBarIcon: ({ color, size }) => {
           let iconName: string;
           if (route.name === "Home") {
@@ -34,15 +35,20 @@ function MainTabs() {
           } else if (route.name === "Profile") {
             iconName = "person";
           } else {
-            iconName = "circle";
+            iconName = "radio-button-on";
           }
           return <Icon name={iconName} size={size} color={color} />;
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} options={{ headerTitle: "Hoje" }} />
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{ headerTitle: "Hoje" }}
+      />
       <Tab.Screen name="Tasks" component={TaskScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="Login" component={LoginScreen} />
     </Tab.Navigator>
   );
 }
@@ -52,10 +58,10 @@ const App: React.FC = () => {
     <NavigationContainer>
       <Stack.Navigator
         initialRouteName="Main"
-        screenOptions={{ headerTitleAlign: "center" }} // Centralizar título em todas as telas
+        screenOptions={{ headerTitleAlign: "center" }}
       >
-        <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Register" component={RegisterScreen} />
+        <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen
           name="Main"
           component={MainTabs}
@@ -63,6 +69,7 @@ const App: React.FC = () => {
         />
         <Stack.Screen name="Task" component={TaskScreen} />
       </Stack.Navigator>
+      <Toast /> 
     </NavigationContainer>
   );
 };

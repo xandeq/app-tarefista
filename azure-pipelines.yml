@@ -1,37 +1,23 @@
 trigger:
-  branches:
-    include:
-      - master
-      - main
+- master
 
 pool:
   vmImage: 'ubuntu-latest'
 
-variables:
-  azure_devops_repo: 'https://alexandrequeiroz.visualstudio.com/Tarefista/_git/app-tarefista'
-  github_repo: 'https://github.com/xandeq/app-tarefista.git'
-  pat: $(AZURE_DEVOPS_PAT)
-
 steps:
-- checkout: self
+- task: NodeTool@0
+  inputs:
+    versionSpec: '20.x'  # Atualize para a versão 20.x do Node.js
+  displayName: 'Install Node.js'
 
-- script: |
-    echo "Setting up Git configuration..."
-    git config --global user.email "you@example.com"
-    git config --global user.name "Your Name"
+- script: npm install -g expo-cli
+  displayName: 'Install Expo CLI'
 
-    # Check if branch master exists, if not check main
-    if git show-ref --quiet refs/heads/master; then
-      branch=master
-    elif git show-ref --quiet refs/heads/main; then
-      branch=main
-    else
-      echo "Neither master nor main branch found."
-      exit 1
-    fi
+- script: npm install --legacy-peer-deps
+  displayName: 'Install dependencies'
 
-    git remote add azure_devops $(azure_devops_repo)
-    git push azure_devops $branch
-  displayName: 'Sync GitHub with Azure DevOps'
-  env:
-    AZURE_DEVOPS_PAT: $(AZURE_DEVOPS_PAT)
+- script: npm install --save-dev @expo/webpack-config --legacy-peer-deps
+  displayName: 'Install Webpack for Expo'
+
+- script: npm run build
+  displayName: 'Build Expo project'

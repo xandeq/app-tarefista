@@ -1,8 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { View, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
-import { Text, TextInput, Button, Appbar } from "react-native-paper";
+import {
+  View,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+} from "react-native";
+import { Text, TextInput, Button, Appbar, Snackbar } from "react-native-paper";
 import Animated, { SlideInUp } from "react-native-reanimated";
 import Icon from "react-native-vector-icons/Ionicons";
+import "firebase/compat/firestore";
+import firebase from "firebase/compat/app";
+import { getTaskCount, incrementTaskCount } from "../utils/taskTracker";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface TaskScreenProps {
   navigation: any;
@@ -11,23 +21,42 @@ interface TaskScreenProps {
 
 const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
   const [task, setTask] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [visible, setVisible] = useState<boolean>(false);
   const taskToEdit = route.params?.task;
 
   useEffect(() => {
-    if (taskToEdit) {
-      setTask(taskToEdit.text);
+    if (route.params?.task) {
+      setTask(route.params.task.text);
     }
-  }, [taskToEdit]);
+  }, [route.params?.task]);
 
   const saveTask = async () => {
     if (task.trim() === "") {
-      alert("Task cannot be empty");
+      setError("Task description cannot be empty");
+      setVisible(true);
       return;
     }
+    if (!taskToEdit) {
+      // Check if user is unregistered and limit exceeded
+      const taskCount = await getTaskCount();
+      if (taskCount >= 10) {
+        Alert.alert(
+          "Limite Atingido",
+          "Você pode adicionar apenas 10 tarefas por dia."
+        );
+        return;
+      }
+    }
+    const tempUserId = await AsyncStorage.getItem("tempUserId");
+    const timestamp = new Date().toISOString();
     try {
       let response;
       if (taskToEdit) {
         // Edit existing task
+        console.log("Timestamp: ", timestamp);
+        console.log("Task 1: ", taskToEdit);
+        console.log("taskToEdit.text: ", taskToEdit.text);
         response = await fetch(
           `https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks/${taskToEdit.id}`,
           {
@@ -38,11 +67,16 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
             body: JSON.stringify({
               text: task,
               completed: taskToEdit.completed,
+              createdAt: taskToEdit.createdAt,
+              updatedAt: timestamp,
+              tempUserId: tempUserId,
             }),
           }
         );
       } else {
-        // Add new task
+        // add new task
+        console.log("Timestamp: ", timestamp);
+        console.log("Task 2: ", task);
         response = await fetch(
           "https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks",
           {
@@ -53,29 +87,81 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
             body: JSON.stringify({
               text: task,
               completed: false,
+              createdAt: timestamp,
+              updatedAt: timestamp,
+              tempUserId: tempUserId,
             }),
           }
         );
       }
 
       if (response.ok) {
-        const data = await response.json().catch(() => null);
-        if (data) {
-          console.log("Tarefa salva com sucesso: ", data.id);
-        } else {
-          console.log("Tarefa salva com sucesso, mas a resposta não era JSON.");
+        console.log("response: ", response);
+        const tempUserId = await AsyncStorage.getItem("tempUserId");
+        await incrementTaskCount();
+        // Tente converter diretamente para JSON
+        const text = await response.text();
+        let data;
+        try {
+          // Tentativa de converter para JSON
+          data = await response.json();
+          console.log("Dados JSON:", data);
+        } catch (error) {
+          // Se a conversão para JSON falhar, trate como texto simples
+          console.error("Erro ao analisar JSON:", error);
+          const text = await response.text(); // Esse erro "Already read" acontece se tentarmos ler o corpo da resposta novamente
+          console.log("Resposta como texto:", text);
         }
-        if (route.params?.refreshTasks) {
+
+        if (!tempUserId && data.tempUserId) {
+          await AsyncStorage.setItem("tempUserId", data.tempUserId);
+        }
+        if (response.ok) {
+          navigation.navigate("Home", { taskUpdated: true }); // Sinalizando que uma tarefa foi atualizada
+        } else {
+          const errorMessage = await response.text();
+          console.error("Erro ao salvar tarefa 1: ", errorMessage);
+        }
+      } else {
+        const errorMessage = await response.text();
+        console.error("Erro ao salvar tarefa 2: ", errorMessage);
+      }
+    } catch (error) {
+      console.error("Erro ao salvar tarefa 3: ", error);
+    }
+  };
+
+  const deleteTask = async () => {
+    try {
+      const response = await fetch(
+        `https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks/${taskToEdit.id}`,
+        {
+          method: "DELETE",
+        }
+      );
+      if (response.ok) {
+        if (typeof route.params?.refreshTasks === "function") {
           route.params.refreshTasks();
         }
         navigation.goBack();
       } else {
-        const errorMessage = await response.text();
-        console.error("Erro ao salvar tarefa: ", errorMessage);
+        console.error("Erro ao deletar tarefa: ", await response.text());
       }
     } catch (error) {
-      console.error("Erro ao salvar tarefa: ", error);
+      console.error("Erro ao deletar tarefa: ", error);
     }
+  };
+
+  const confirmDelete = () => {
+    Alert.alert(
+      "Confirmação",
+      "Você tem certeza que deseja deletar esta tarefa?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        { text: "Deletar", style: "destructive", onPress: deleteTask },
+      ],
+      { cancelable: true }
+    );
   };
 
   return (
@@ -84,8 +170,10 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
       style={styles.container}
     >
       <Appbar.Header>
-        <Appbar.BackAction onPress={() => navigation.goBack()} />
-        <Appbar.Content title={taskToEdit ? "Edit Task" : "Add Task"} />
+        <Appbar.Action icon="close" onPress={() => navigation.goBack()} />
+        {taskToEdit && (
+          <Appbar.Action icon="trash-can" onPress={confirmDelete} color="red" />
+        )}
       </Appbar.Header>
       <Animated.View entering={SlideInUp} style={styles.content}>
         <Text variant="headlineLarge" style={styles.title}>
@@ -97,7 +185,7 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
           style={styles.input}
           value={task}
           onChangeText={setTask}
-          theme={{ colors: { primary: "#0000ff" } }}
+          theme={{ colors: { primary: "#FF6F61" } }}
         />
         <Button
           mode="contained"
@@ -110,11 +198,19 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
               color="#fff"
             />
           )}
-          buttonColor="#0000ff"
+          buttonColor="#FF6F61" // Changed to a color from the logo
         >
           {taskToEdit ? "Save Task" : "Add Task"}
         </Button>
       </Animated.View>
+      <Snackbar
+        visible={visible}
+        onDismiss={() => setVisible(false)}
+        duration={3000}
+        style={styles.snackbar}
+      >
+        {error}
+      </Snackbar>
     </KeyboardAvoidingView>
   );
 };
@@ -122,7 +218,7 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#FFE5B4",
   },
   content: {
     flex: 1,
@@ -132,18 +228,23 @@ const styles = StyleSheet.create({
   },
   title: {
     marginBottom: 20,
-    color: "#0000ff",
+    color: "#FF6F61", // Changed to a color from the logo
     fontSize: 24,
+    fontWeight: "bold",
   },
   input: {
     width: "100%",
     marginBottom: 20,
     borderRadius: 8,
+    backgroundColor: "#fff",
   },
   button: {
     width: "100%",
     paddingVertical: 10,
     borderRadius: 8,
+  },
+  snackbar: {
+    backgroundColor: "#FF6F61",
   },
 });
 
