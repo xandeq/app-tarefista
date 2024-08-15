@@ -28,11 +28,11 @@ function MainTabs() {
         headerTitleAlign: "center",
         tabBarIcon: ({ color, size }) => {
           let iconName: string;
-          if (route.name === "Home") {
+          if (route.name === "Inicio") {
             iconName = "home";
-          } else if (route.name === "Tasks") {
+          } else if (route.name === "Tarefas") {
             iconName = "list";
-          } else if (route.name === "Profile") {
+          } else if (route.name === "Perfil") {
             iconName = "person";
           } else {
             iconName = "radio-button-on";
@@ -42,12 +42,12 @@ function MainTabs() {
       })}
     >
       <Tab.Screen
-        name="Home"
+        name="Inicio"
         component={HomeScreen}
         options={{ headerTitle: "Hoje" }}
       />
-      <Tab.Screen name="Tasks" component={TaskScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="Tarefas" component={TaskScreen} />
+      <Tab.Screen name="Perfil" component={ProfileScreen} />
       <Tab.Screen name="Login" component={LoginScreen} />
     </Tab.Navigator>
   );

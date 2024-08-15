@@ -114,7 +114,7 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
           await AsyncStorage.setItem("tempUserId", data.tempUserId);
         }
         if (response.ok) {
-          navigation.navigate("Home", { taskUpdated: true }); // Sinalizando que uma tarefa foi atualizada
+          navigation.navigate("Inicio", { taskUpdated: true }); // Sinalizando que uma tarefa foi atualizada
         } else {
           const errorMessage = await response.text();
           console.error("Erro ao salvar tarefa 1: ", errorMessage);
@@ -174,11 +174,11 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
       </Appbar.Header>
       <Animated.View entering={SlideInUp} style={styles.content}>
         <Text variant="headlineLarge" style={styles.title}>
-          {taskToEdit ? "Edit Task" : "New Task"}
+          {taskToEdit ? "Edit Tarefa" : "Nova Tarefa"}
         </Text>
         <TextInput
           mode="outlined"
-          label="Task description"
+          label="Descrição da tarefa"
           style={styles.input}
           value={task}
           onChangeText={setTask}
@@ -197,7 +197,7 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
           )}
           buttonColor="#FF6F61" // Changed to a color from the logo
         >
-          {taskToEdit ? "Save Task" : "Add Task"}
+          {taskToEdit ? "Salvar" : "Adicionar"}
         </Button>
       </Animated.View>
       <Snackbar
