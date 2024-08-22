@@ -8,7 +8,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 
 type RegisterScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
-  "Register"
+  "Registrar"
 >;
 
 const RegisterScreen: React.FC = () => {
@@ -21,16 +21,17 @@ const RegisterScreen: React.FC = () => {
   const navigation = useNavigation<RegisterScreenNavigationProp>();
 
   const registerUser = async () => {
-    if (email.trim() === "" || password.trim() === "") {
+    if (email.trim() === "" || password.trim() === "" || displayName.trim() === "") {
       Toast.show({
         type: "error",
-        text1: "Error",
-        text2: "Email and password cannot be empty",
+        text1: "Erro",
+        text2: "Email, senha e nome de exibição não podem estar vazios",
       });
-      setError("Email and password cannot be empty");
+      setError("Email, senha e nome de exibição não podem estar vazios");
       setVisible(true);
       return;
     }
+  
     setLoading(true);
     try {
       const response = await fetch(
@@ -43,22 +44,26 @@ const RegisterScreen: React.FC = () => {
           body: JSON.stringify({ email, password, displayName }),
         }
       );
+  
       if (response.ok) {
         const data = await response.json();
         const userId = data.userId;
+        
+        // Sincronizar tarefas após o registro, se necessário
         await syncTasksAfterRegistration(userId);
+        
         setLoading(false);
         Toast.show({
           type: "success",
-          text1: "Success",
-          text2: "User registered successfully",
+          text1: "Sucesso",
+          text2: "Usuário registrado com sucesso",
         });
         navigation.navigate("Login");
       } else {
         const errorMessage = await response.text();
         Toast.show({
           type: "error",
-          text1: "Error",
+          text1: "Erro",
           text2: errorMessage,
         });
         setError(errorMessage);
@@ -67,15 +72,16 @@ const RegisterScreen: React.FC = () => {
     } catch (error: any) {
       Toast.show({
         type: "error",
-        text1: "Error",
-        text2: "Error registering user: " + error.message,
+        text1: "Erro",
+        text2: "Erro ao registrar usuário: " + error.message,
       });
-      setError("Error registering user: " + error.message);
+      setError("Erro ao registrar usuário: " + error.message);
       setVisible(true);
     } finally {
       setLoading(false);
     }
   };
+  
 
   return (
     <KeyboardAvoidingView

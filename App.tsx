@@ -1,4 +1,5 @@
 import React from "react";
+import { Text, View, StyleSheet } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -10,68 +11,152 @@ import TaskScreen from "./screens/TaskScreen";
 import Icon from "react-native-vector-icons/Ionicons";
 import "react-native-reanimated";
 import Toast from "react-native-toast-message";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 
 type RootStackParamList = {
+  HomeTabs: undefined;
   Login: undefined;
-  Register: undefined;
-  Main: undefined;
-  Task: { taskId: string } | undefined;
+  Registrar: undefined;
+  Perfil: undefined;
+  Tarefas: { taskId: string } | undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator();
 
-function MainTabs() {
+function AuthenticatedTabs() {
   return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerTitleAlign: "center",
-        tabBarIcon: ({ color, size }) => {
-          let iconName: string;
-          if (route.name === "Inicio") {
-            iconName = "home";
-          } else if (route.name === "Tarefas") {
-            iconName = "list";
-          } else if (route.name === "Perfil") {
-            iconName = "person";
-          } else {
-            iconName = "radio-button-on";
-          }
-          return <Icon name={iconName} size={size} color={color} />;
-        },
-      })}
-    >
+    <Tab.Navigator>
       <Tab.Screen
         name="Inicio"
         component={HomeScreen}
-        options={{ headerTitle: "Hoje" }}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="home-outline" color={color} size={size} />
+          ),
+        }}
       />
-      <Tab.Screen name="Tarefas" component={TaskScreen} />
-      <Tab.Screen name="Perfil" component={ProfileScreen} />
-      <Tab.Screen name="Login" component={LoginScreen} />
+      <Tab.Screen
+        name="Tarefas"
+        component={TaskScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="checkmark-done-outline" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Perfil"
+        component={ProfileScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="person-outline" color={color} size={size} />
+          ),
+        }}
+      />
     </Tab.Navigator>
   );
 }
 
-const App: React.FC = () => {
+function UnauthenticatedTabs() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName="Main"
-        screenOptions={{ headerTitleAlign: "center" }}
-      >
-        <Stack.Screen name="Register" component={RegisterScreen} />
-        <Stack.Screen name="Login" component={LoginScreen} />
+    <Tab.Navigator>
+      <Tab.Screen
+        name="Inicio"
+        component={HomeScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="home-outline" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Tarefas"
+        component={TaskScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="checkmark-done-outline" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Perfil"
+        component={ProfileScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="person-outline" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Login"
+        component={LoginScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="log-in-outline" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Registrar"
+        component={RegisterScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="person-add-outline" color={color} size={size} />
+          ),
+        }}
+      />
+    </Tab.Navigator>
+  );
+}
+
+function AppNavigator() {
+  const { user } = useAuth();
+
+  return (
+    <Stack.Navigator
+      initialRouteName="HomeTabs"
+      screenOptions={{ headerTitleAlign: "center" }}
+    >
+      {user ? (
         <Stack.Screen
-          name="Main"
-          component={MainTabs}
+          name="HomeTabs"
+          component={AuthenticatedTabs}
           options={{ headerShown: false }}
         />
-        <Stack.Screen name="Task" component={TaskScreen} />
-      </Stack.Navigator>
-      <Toast /> 
-    </NavigationContainer>
+      ) : (
+        <Stack.Screen
+          name="HomeTabs"
+          component={UnauthenticatedTabs}
+          options={{ headerShown: false }}
+        />
+      )}
+      <Stack.Screen name="Tarefas" component={TaskScreen} />
+    </Stack.Navigator>
   );
-};
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <NavigationContainer>
+        <AppNavigator />
+        <Toast />
+      </NavigationContainer>
+    </AuthProvider>
+  );
+}
+
+const styles = StyleSheet.create({
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorText: {
+    color: "red",
+    fontSize: 18,
+  },
+});
 
 export default App;

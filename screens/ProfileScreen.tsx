@@ -1,4 +1,4 @@
-import React, { useState, useContext, createContext } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -11,85 +11,69 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { ParamListBase } from "@react-navigation/native";
+import { useAuth } from "../context/AuthContext"; // Use o contexto de autenticação que criamos
 
 type RegisterScreenNavigationProp = NativeStackNavigationProp<
   ParamListBase,
-  "Register"
+  "Registrar"
 >;
 
-const AuthContext = createContext<{
-  user: { displayName?: string; photoURL?: string };
-}>({
-  user: {},
-});
-
 const ProfileScreen: React.FC = () => {
-  const { user } = useContext(AuthContext);
+  const authContext = useAuth();
+
+  if (!authContext) {
+    return (
+      <View>
+        <Text>Erro de autenticação</Text>
+      </View>
+    );
+  }
+
+  const { user, logout } = authContext;
   const navigation = useNavigation<RegisterScreenNavigationProp>();
   const [isEditing, setIsEditing] = useState(false);
   const [displayName, setDisplayName] = useState(user?.displayName || "");
 
   const handleSignOut = async () => {
     try {
-      const response = await fetch(
-        "https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/logout",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (response.ok) {
-        navigation.navigate("Login");
-      } else {
-        console.error("Logout failed");
-      }
+      await logout();
+      navigation.navigate("Login");
     } catch (error) {
       console.error("Erro ao fazer logout: ", error);
     }
   };
 
   const handleSave = () => {
-    // Implement profile update logic via API
+    // Implemente a lógica para salvar as alterações no perfil
     setIsEditing(false);
-  };
-
-  const handleNavigateToRegister = () => {
-    navigation.navigate("Register");
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Perfil</Text>
-
-      {/* Mostrar a foto do perfil apenas se o usuário estiver autenticado */}
-      {user?.photoURL && (
-        <Image
-          source={{ uri: user?.photoURL || "https://via.placeholder.com/150" }}
-          style={styles.profileImage}
-        />
-      )}
-
-      {/* Mostrar o nome ou o campo de edição apenas se o usuário estiver autenticado */}
-      {user?.displayName ? (
-        isEditing ? (
-          <TextInput
-            style={styles.input}
-            value={displayName}
-            onChangeText={setDisplayName}
-          />
-        ) : (
-          <Text style={styles.displayName}>{user.displayName}</Text>
-        )
-      ) : (
-        <Text style={styles.displayName}>Usuário não autenticado</Text>
-      )}
-
-      {/* Mostrar os botões de edição e logout apenas se o usuário estiver autenticado */}
-      {user?.displayName && (
+      {user ? (
         <>
+          {/* Mostrar a foto do perfil se disponível */}
+          {user.photoURL && (
+            <Image
+              source={{
+                uri: user.photoURL || "https://via.placeholder.com/150",
+              }}
+              style={styles.profileImage}
+            />
+          )}
+          {isEditing ? (
+            <TextInput
+              style={styles.input}
+              value={displayName}
+              onChangeText={setDisplayName}
+            />
+          ) : (
+            <Text style={styles.displayName}>
+              {displayName || user.email || "Sem nome"}
+            </Text>
+          )}
+          <Text style={styles.email}>{user.email}</Text>
           {isEditing ? (
             <Button title="Salvar" onPress={handleSave} />
           ) : (
@@ -99,14 +83,9 @@ const ProfileScreen: React.FC = () => {
             <Text style={styles.logoutButtonText}>Sair</Text>
           </TouchableOpacity>
         </>
+      ) : (
+        <Text style={styles.displayName}>Usuário não autenticado</Text>
       )}
-
-      <TouchableOpacity
-        onPress={handleNavigateToRegister}
-        style={styles.registerButton}
-      >
-        <Text style={styles.registerButtonText}>Registrar</Text>
-      </TouchableOpacity>
     </View>
   );
 };
@@ -139,6 +118,11 @@ const styles = StyleSheet.create({
   },
   displayName: {
     fontSize: 18,
+    marginBottom: 5,
+  },
+  email: {
+    fontSize: 16,
+    color: "gray",
     marginBottom: 20,
   },
   logoutButton: {
@@ -148,16 +132,6 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   logoutButtonText: {
-    color: "#fff",
-    fontSize: 16,
-  },
-  registerButton: {
-    marginTop: 20,
-    padding: 10,
-    backgroundColor: "blue",
-    borderRadius: 5,
-  },
-  registerButtonText: {
     color: "#fff",
     fontSize: 16,
   },

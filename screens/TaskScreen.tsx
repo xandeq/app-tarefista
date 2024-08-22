@@ -10,7 +10,6 @@ import { Text, TextInput, Button, Appbar, Snackbar } from "react-native-paper";
 import Animated, { SlideInUp } from "react-native-reanimated";
 import Icon from "react-native-vector-icons/Ionicons";
 import "firebase/compat/firestore";
-import firebase from "firebase/compat/app";
 import { getTaskCount, incrementTaskCount } from "../utils/taskTracker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -39,7 +38,7 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
     }
     if (!taskToEdit) {
       // Check if user is unregistered and limit exceeded
-      const taskCount = await getTaskCount();
+      let taskCount = await getTaskCount();
       if (taskCount >= 10) {
         Alert.alert(
           "Limite Atingido",
@@ -48,8 +47,8 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
         return;
       }
     }
-    const tempUserId = await AsyncStorage.getItem("tempUserId");
-    const timestamp = new Date().toISOString();
+    let tempUserId = await AsyncStorage.getItem("tempUserId");
+    let timestamp = new Date().toISOString();
     try {
       let response;
       if (taskToEdit) {
@@ -94,37 +93,49 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
           }
         );
       }
+      console.log("Response Status:", response.status);
+      console.log("Response Headers:", response.headers);
+
+      // Verificar o tipo de resposta
+      const contentType = response.headers.get("content-type");
+      let responseData;
+      if (contentType && contentType.includes("application/json")) {
+        responseData = await response.json();
+        console.log("Dados JSON:", responseData);
+      } else {
+        responseData = await response.text();
+        console.log("Texto da resposta:", responseData);
+      }
 
       if (response.ok) {
-        console.log("response: ", response);
-        const tempUserId = await AsyncStorage.getItem("tempUserId");
-        await incrementTaskCount();
-        // Tente converter diretamente para JSON
-        let data;
-        try {
-          // Tentativa de converter para JSON
-          data = await response.json();
-          console.log("Dados JSON:", data);
-        } catch (error) {
-          // Se a conversão para JSON falhar, trate como texto simples
-          console.error("Erro ao analisar JSON:", error);
+        if (!tempUserId && responseData && responseData.tempUserId) {
+          await AsyncStorage.setItem("tempUserId", responseData.tempUserId);
         }
-
-        if (!tempUserId && data.tempUserId) {
-          await AsyncStorage.setItem("tempUserId", data.tempUserId);
-        }
-        if (response.ok) {
-          navigation.navigate("Inicio", { taskUpdated: true }); // Sinalizando que uma tarefa foi atualizada
-        } else {
-          const errorMessage = await response.text();
-          console.error("Erro ao salvar tarefa 1: ", errorMessage);
-        }
+        navigation.navigate("Inicio", { taskUpdated: true });
       } else {
-        const errorMessage = await response.text();
-        console.error("Erro ao salvar tarefa 2: ", errorMessage);
+        console.error("Erro ao salvar tarefa:", responseData);
       }
-    } catch (error) {
-      console.error("Erro ao salvar tarefa 3: ", error);
+    } catch (error: any) {
+      // Verifica se o erro é uma instância de Error, TypeError ou se é um erro de rede
+      if (error instanceof TypeError) {
+        console.error("Erro de tipo ao salvar tarefa:", error.message);
+        console.error("Stack Trace:", error.stack);
+      } else if (error instanceof SyntaxError) {
+        console.error("Erro de sintaxe ao salvar tarefa:", error.message);
+        console.error("Stack Trace:", error.stack);
+      } else if (error.message.includes("NetworkError")) {
+        console.error("Erro de rede ao salvar tarefa:", error.message);
+        console.error("Verifique sua conexão com a internet.");
+      } else {
+        console.error("Erro desconhecido ao salvar tarefa:", error.message);
+        console.error("Stack Trace:", error.stack);
+      }
+
+      // Exibe detalhes adicionais se disponíveis
+      console.error(
+        "Erro ao salvar tarefa completo:",
+        JSON.stringify(error, null, 2)
+      );
     }
   };
 

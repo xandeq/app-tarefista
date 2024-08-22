@@ -15,6 +15,7 @@ import Animated, {
 } from "react-native-reanimated";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
+import { useAuth } from "../context/AuthContext";
 
 interface HomeScreenProps {
   navigation: any;
@@ -60,25 +61,25 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
         console.error("Error fetching tasks:", response.statusText);
       }
     } catch (error) {
-      console.error("Error fetching tasks:", error);
+      // Verifica se o erro é uma instância de AxiosError
+      if (axios.isAxiosError(error)) {
+        console.error("Error fetching tasks: AxiosError:", {
+          message: error.message,
+          code: error.code,
+          status: error.response?.status,
+          headers: error.response?.headers,
+          data: error.response?.data,
+        });
+      }
     } finally {
       setLoading(false);
-    }
-  };
-
-  const saveTasks = async (updatedTasks: any[]) => {
-    try {
-      await AsyncStorage.setItem("tasks", JSON.stringify(updatedTasks));
-      setTasks(updatedTasks);
-    } catch (error) {
-      console.error("Error saving tasks:", error);
     }
   };
 
   // Função para obter o userId do AsyncStorage ou da API
   const fetchUserId = async () => {
     try {
-      console.log("fetchUserId HOME");
+      console.log("fetchUserId HOME entrou na function");
       // Primeiro, verifique se o userId já está no AsyncStorage
       let storedUserId = await AsyncStorage.getItem("tempUserId");
       if (storedUserId) {
@@ -87,13 +88,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
         return storedUserId;
       }
 
-      // Se o userId não estiver armazenado, busque o authToken
       const token = await AsyncStorage.getItem("authToken");
       if (!token) {
         console.log("No authToken found in AsyncStorage");
         return null;
       }
-      console.log("Token fetchUserId:", token);
+      console.log("fetchUserId Token:", token);
 
       // Faça a chamada à API para obter o userId
       const response = await fetch(
@@ -108,7 +108,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log("User ID from API:", data.userId);
+        console.log("fetchUserId data.userId:", data.userId);
 
         // Armazene o userId no AsyncStorage para uso futuro
         await AsyncStorage.setItem("tempUserId", data.userId);
@@ -129,9 +129,14 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
     console.log("useEffect HomeScreen");
     const loadUserIdAndTasks = async () => {
       const fetchedUserId = await fetchUserId();
-      console.log("fetchedUserId:", fetchedUserId);
+      console.log("useEffect fetchedUserId HOME:", fetchedUserId);
       if (fetchedUserId) {
         await fetchTasks(fetchedUserId); // Chama fetchTasks com o userId obtido
+      } else {
+        // Se o fetchedUserId for null, defina a lista de tarefas como vazia
+        console.log("User ID is null, setting tasks to an empty array.");
+        setTasks([]); // Carrega uma lista de tarefas vazia
+        setLoading(false); // Certifique-se de que o indicador de carregamento pare
       }
     };
 
@@ -164,7 +169,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
   };
 
   const handleEditTask = (task: any) => {
-    navigation.navigate("Task", { task: task });
+    navigation.navigate("Tarefas", { task: task });
   };
 
   const handleRemoveTask = (taskId: string) => {
@@ -184,7 +189,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
         <TouchableOpacity
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
-          onPress={() => navigation.navigate("Task", { taskId: null })}
+          onPress={() => navigation.navigate("Tarefas", { taskId: null })}
         >
           <Icon name="add-circle" size={56} color="#FFFFFF" />
         </TouchableOpacity>
