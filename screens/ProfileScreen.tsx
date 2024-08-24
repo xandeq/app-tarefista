@@ -62,7 +62,7 @@ const ProfileScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Perfil</Text>
+      <Text style={styles.title}>Profile</Text>
 
       {/* Mostrar a foto do perfil apenas se o usuário estiver autenticado */}
       {user?.photoURL && (
@@ -93,7 +93,7 @@ const ProfileScreen: React.FC = () => {
           {isEditing ? (
             <Button title="Salvar" onPress={handleSave} />
           ) : (
-            <Button title="Editar Perfil" onPress={() => setIsEditing(true)} />
+            <Button title="Editar Profile" onPress={() => setIsEditing(true)} />
           )}
           <TouchableOpacity onPress={handleSignOut} style={styles.logoutButton}>
             <Text style={styles.logoutButtonText}>Sair</Text>
@@ -105,7 +105,7 @@ const ProfileScreen: React.FC = () => {
         onPress={handleNavigateToRegister}
         style={styles.registerButton}
       >
-        <Text style={styles.registerButtonText}>Registrar</Text>
+        <Text style={styles.registerButtonText}>Register</Text>
       </TouchableOpacity>
     </View>
   );

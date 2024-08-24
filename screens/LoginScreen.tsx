@@ -1,13 +1,23 @@
 import React, { useState } from "react";
-import { View, StyleSheet, KeyboardAvoidingView, Platform, TouchableOpacity } from "react-native";
+import {
+  View,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableOpacity,
+} from "react-native";
 import { Text, TextInput, Button, Snackbar } from "react-native-paper";
-import { useNavigation } from '@react-navigation/native';
-import { RootStackParamList } from '../types'; // Importe as tipagens
+import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import Toast from 'react-native-toast-message';
+import Toast from "react-native-toast-message";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAuth } from "../context/AuthContext"; // Importar useAuth and UserType
+import { RootStackParamList } from "../types";
 
-type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
+type LoginScreenNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  "Login"
+>;
 
 const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState<string>("");
@@ -17,12 +27,14 @@ const LoginScreen: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const navigation = useNavigation<LoginScreenNavigationProp>();
 
+  const { setUser } = useAuth() as { setUser: (user: any) => void }; // Aqui está o uso do contexto de autenticação
+
   const loginUser = async () => {
     if (email.trim() === "" || password.trim() === "") {
       Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Email and password cannot be empty'
+        type: "error",
+        text1: "Error",
+        text2: "Email and password cannot be empty",
       });
       setError("Email and password cannot be empty");
       setVisible(true);
@@ -41,32 +53,41 @@ const LoginScreen: React.FC = () => {
         }
       );
       const responseData = await response.json();
+      console.log("Response data LOGIN: ", responseData);
       if (responseData.token) {
-        await AsyncStorage.setItem('authToken', responseData.token);
+        console.log("Response data token: ", responseData.token);
+        console.log("Response data user: ", responseData.user);
+        await AsyncStorage.setItem("authToken", responseData.token);
+        await AsyncStorage.setItem("user", JSON.stringify(responseData.user));
+        setUser(responseData.user);
       }
       if (response.ok) {
         setLoading(false);
         Toast.show({
-          type: 'success',
-          text1: 'Success',
-          text2: 'Logged in successfully'
+          type: "success",
+          text1: "Success",
+          text2: "Logged in successfully",
         });
-        navigation.navigate("Main");
+        console.log("User logged in successfully navigate Home");
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "Home" }], // Reseta a pilha de navegação e vai para Home
+        }); // Navigate to the MainTabs screen
       } else {
         const errorMessage = await response.text();
         Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: errorMessage
+          type: "error",
+          text1: "Error",
+          text2: errorMessage,
         });
         setError(errorMessage);
         setVisible(true);
       }
     } catch (error: any) {
       Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Error logging in: ' + error.message
+        type: "error",
+        text1: "Error",
+        text2: "Error logging in: " + error.message,
       });
       setError("Error logging in: " + error.message);
       setVisible(true);
@@ -123,8 +144,11 @@ const LoginScreen: React.FC = () => {
         >
           {error}
         </Snackbar>
-        <TouchableOpacity onPress={handleNavigateToRegister} style={styles.registerButton}>
-          <Text style={styles.registerButtonText}>Registrar</Text>
+        <TouchableOpacity
+          onPress={handleNavigateToRegister}
+          style={styles.registerButton}
+        >
+          <Text style={styles.registerButtonText}>Register</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>

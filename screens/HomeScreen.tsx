@@ -5,6 +5,7 @@ import {
   FlatList,
   ActivityIndicator,
   TouchableOpacity,
+  Text,
 } from "react-native";
 import TaskItem from "./TaskItem";
 import Icon from "react-native-vector-icons/Ionicons";
@@ -15,6 +16,7 @@ import Animated, {
 } from "react-native-reanimated";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
+import LottieView from "lottie-react-native";
 
 interface HomeScreenProps {
   navigation: any;
@@ -164,7 +166,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
   };
 
   const handleEditTask = (task: any) => {
-    navigation.navigate("Task", { task: task });
+    navigation.navigate("Tasks", { task: task });
   };
 
   const handleRemoveTask = (taskId: string) => {
@@ -184,13 +186,26 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
         <TouchableOpacity
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
-          onPress={() => navigation.navigate("Task", { taskId: null })}
+          onPress={() => navigation.navigate("Tasks", { taskId: null })}
         >
           <Icon name="add-circle" size={56} color="#FFFFFF" />
         </TouchableOpacity>
       </Animated.View>
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" />
+      ) : tasks.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <LottieView
+            source={require("../assets/empty-box.json")} // Caminho para o arquivo .json da animação
+            autoPlay
+            loop
+            style={styles.animation}
+          />
+          <Text style={styles.emptyMessage}>Nenhuma tarefa encontrada!</Text>
+          <Text style={styles.subMessage}>
+            Adicione novas tarefas para vê-las aqui.
+          </Text>
+        </View>
       ) : (
         <FlatList
           data={tasks}
@@ -240,6 +255,26 @@ const styles = StyleSheet.create({
     height: 70,
     marginBottom: 20,
     resizeMode: "contain", // Ensures the image maintains its aspect ratio
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  animation: {
+    width: 150,
+    height: 150,
+  },
+  emptyMessage: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginTop: 20,
+    color: "#333",
+  },
+  subMessage: {
+    fontSize: 14,
+    marginTop: 10,
+    color: "#666",
   },
 });
 

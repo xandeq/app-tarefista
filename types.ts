@@ -1,8 +1,8 @@
-// types.ts
 export type RootStackParamList = {
-    Login: undefined;
-    Register: undefined;
-    Main: undefined;
-    Task: { taskId: string } | undefined;
-  };
-  
+  Login: undefined;
+  Register: undefined;
+  MainTabs: undefined;
+  Home: undefined;
+  Profile: undefined;
+  Tasks: { taskId: string } | undefined;
+};

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import {
-  View,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
@@ -114,7 +113,7 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
           await AsyncStorage.setItem("tempUserId", data.tempUserId);
         }
         if (response.ok) {
-          navigation.navigate("Inicio", { taskUpdated: true }); // Sinalizando que uma tarefa foi atualizada
+          navigation.navigate("Home", { taskUpdated: true }); // Sinalizando que uma tarefa foi atualizada
         } else {
           const errorMessage = await response.text();
           console.error("Erro ao salvar tarefa 1: ", errorMessage);
