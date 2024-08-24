@@ -11,20 +11,17 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { ParamListBase } from "@react-navigation/native";
+import { useAuth } from "../context/AuthContext";
+import Toast from "react-native-toast-message";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type RegisterScreenNavigationProp = NativeStackNavigationProp<
   ParamListBase,
   "Register"
 >;
 
-const AuthContext = createContext<{
-  user: { displayName?: string; photoURL?: string };
-}>({
-  user: {},
-});
-
 const ProfileScreen: React.FC = () => {
-  const { user } = useContext(AuthContext);
+  const { user, setUser } = useAuth();
   const navigation = useNavigation<RegisterScreenNavigationProp>();
   const [isEditing, setIsEditing] = useState(false);
   const [displayName, setDisplayName] = useState(user?.displayName || "");
@@ -42,12 +39,39 @@ const ProfileScreen: React.FC = () => {
       );
 
       if (response.ok) {
-        navigation.navigate("Login");
+        await AsyncStorage.removeItem("authToken");
+        await AsyncStorage.removeItem("user");
+
+        // Atualizar o estado do contexto de autenticação
+        setUser(null);
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "Home" }], // Reseta a pilha de navegação e vai para Home
+        });
       } else {
-        console.error("Logout failed");
+        // Se a resposta não for ok, exiba um toast de erro
+        const errorData = await response.json();
+        console.error("Logout failed:", errorData);
+
+        Toast.show({
+          type: "error",
+          text1: "Falha no Logout",
+          text2:
+            errorData.message ||
+            "Não foi possível realizar o logout. Tente novamente.",
+        });
       }
-    } catch (error) {
+    } catch (error: any) {
+      // Em caso de erro na comunicação ou falha na API, exiba um toast detalhado
       console.error("Erro ao fazer logout: ", error);
+
+      Toast.show({
+        type: "error",
+        text1: "Erro ao Fazer Logout",
+        text2:
+          error.message ||
+          "Ocorreu um erro inesperado ao tentar sair. Verifique sua conexão ou tente novamente mais tarde.",
+      });
     }
   };
 
@@ -87,8 +111,7 @@ const ProfileScreen: React.FC = () => {
         <Text style={styles.displayName}>Usuário não autenticado</Text>
       )}
 
-      {/* Mostrar os botões de edição e logout apenas se o usuário estiver autenticado */}
-      {user?.displayName && (
+      {user ? (
         <>
           {isEditing ? (
             <Button title="Salvar" onPress={handleSave} />
@@ -99,14 +122,16 @@ const ProfileScreen: React.FC = () => {
             <Text style={styles.logoutButtonText}>Sair</Text>
           </TouchableOpacity>
         </>
+      ) : (
+        <>
+          <TouchableOpacity
+            onPress={handleNavigateToRegister}
+            style={styles.registerButton}
+          >
+            <Text style={styles.registerButtonText}>Register</Text>
+          </TouchableOpacity>
+        </>
       )}
-
-      <TouchableOpacity
-        onPress={handleNavigateToRegister}
-        style={styles.registerButton}
-      >
-        <Text style={styles.registerButtonText}>Register</Text>
-      </TouchableOpacity>
     </View>
   );
 };

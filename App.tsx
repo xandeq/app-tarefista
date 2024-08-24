@@ -43,16 +43,28 @@ function MainTabs() {
         },
       })}
     >
-      <Tab.Screen
-        name="HomeTab"
-        component={HomeScreen}
-        options={{ headerTitle: "Hoje" }}
-      />
-      <Tab.Screen name="TasksTab" component={TaskScreen} />
-      <Tab.Screen name="Login" component={LoginScreen} />
-      <Tab.Screen name="Register" component={RegisterScreen} />
-      {user && (
-        <Tab.Screen name="ProfileTab" component={ProfileScreen} />
+      {user ? (
+        <>
+          {/* Abas para usuários logados */}
+          <Tab.Screen
+            name="HomeTab"
+            component={HomeScreen}
+            options={{ headerTitle: "Hoje" }}
+          />
+          <Tab.Screen name="TasksTab" component={TaskScreen} />
+          <Tab.Screen name="ProfileTab" component={ProfileScreen} />
+        </>
+      ) : (
+        <>
+          <Tab.Screen
+            name="HomeTab"
+            component={HomeScreen}
+            options={{ headerTitle: "Hoje" }}
+          />
+          <Tab.Screen name="Login" component={LoginScreen} />
+          <Tab.Screen name="Register" component={RegisterScreen} />
+          {user && <Tab.Screen name="ProfileTab" component={ProfileScreen} />}
+        </>
       )}
     </Tab.Navigator>
   );
