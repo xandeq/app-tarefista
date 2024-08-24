@@ -32,13 +32,29 @@ function MainTabs() {
       screenOptions={({ route }) => ({
         headerTitleAlign: "center",
         tabBarIcon: ({ color, size }) => {
-          if (route.name === "HomeTab") {
-            iconName = "home";
-          } else if (route.name === "TasksTab") {
-            iconName = "list";
-          } else if (route.name === "ProfileTab") {
-            iconName = "person";
+          let iconName: string;
+
+          switch (route.name) {
+            case "HomeTab":
+              iconName = "home";
+              break;
+            case "TasksTab":
+              iconName = "clipboard";
+              break;
+            case "ProfileTab":
+              iconName = "person";
+              break;
+            case "Login":
+              iconName = "log-in";
+              break;
+            case "Register":
+              iconName = "person-add";
+              break;
+            default:
+              iconName = "home";
+              break;
           }
+
           return <Icon name={iconName} size={size} color={color} />;
         },
       })}
@@ -83,6 +99,7 @@ function AppNavigator() {
       />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
+      <Stack.Screen name="Tasks" component={TaskScreen} />
     </Stack.Navigator>
   );
 }

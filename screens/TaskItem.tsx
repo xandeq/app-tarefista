@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import Animated, { SlideInLeft, SlideOutRight } from "react-native-reanimated";
 import { Audio } from "expo-av";
+import LottieView from "lottie-react-native";
 
 interface Task {
   id: string;
@@ -25,6 +26,8 @@ const TaskItem: React.FC<TaskItemProps> = ({
   refreshTasks,
   onEdit,
 }) => {
+  const [showConfetti, setShowConfetti] = useState(false);
+
   const handleRemove = () => {
     confirmRemove(task.id);
   };
@@ -49,6 +52,17 @@ const TaskItem: React.FC<TaskItemProps> = ({
     }
   };
 
+  const handleCompleteWithEffect = async () => {
+    if (!task.completed) {
+      // Apenas mostre a animação se a tarefa ainda não estiver completa
+      setShowConfetti(true);
+      setTimeout(() => {
+        setShowConfetti(false);
+      }, 1500); // Duração do efeito de confetti
+    }
+    await handleComplete();
+  };
+
   const handleComplete = async () => {
     try {
       const response = await fetch(
@@ -68,6 +82,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
       );
       if (response.ok) {
         if (!task.completed) {
+          // Só toque o som se a tarefa estiver sendo completada
           playSound();
         }
         refreshTasks();
@@ -97,7 +112,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
       style={[styles.task, task.completed && styles.taskCompleted]}
     >
       <View style={styles.taskContent}>
-        <TouchableOpacity onPress={handleComplete}>
+        <TouchableOpacity onPress={handleCompleteWithEffect}>
           <Icon
             name={task.completed ? "checkmark-circle" : "ellipse-outline"}
             size={24}
@@ -121,6 +136,16 @@ const TaskItem: React.FC<TaskItemProps> = ({
       <TouchableOpacity onPress={handleRemove}>
         <Icon name="trash" size={24} color="red" />
       </TouchableOpacity>
+      {showConfetti && (
+        <View style={styles.overlay}>
+          <LottieView
+            source={require("../assets/thumbsup.json")}
+            autoPlay
+            loop={false}
+            style={styles.thumbsup}
+          />
+        </View>
+      )}
     </Animated.View>
   );
 };
@@ -160,6 +185,20 @@ const styles = StyleSheet.create({
   taskTextCompleted: {
     textDecorationLine: "line-through",
     color: "gray",
+  },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
+  },
+  thumbsup: {
+    width: 50,
+    height: 50,
   },
 });
 
