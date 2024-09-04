@@ -3,14 +3,6 @@ param(
     [string]$commitMessage   # Mensagem do commit
 )
 
-if (git status --porcelain) {
-    git add .
-    git commit -m $commitMessage
-} else {
-    Write-Host "Nenhuma alteração encontrada. Pulando o commit."
-}
-
-
 # Função para verificar o último comando
 function Check-LastCommand {
     if ($LASTEXITCODE -ne 0) {
@@ -20,6 +12,16 @@ function Check-LastCommand {
 }
 
 $version = "1.0.9"
+
+# Verifica se há alterações pendentes antes de tentar fazer o commit
+$gitStatus = git status --porcelain
+if ($gitStatus) {
+    git add .
+    git commit -m $commitMessage
+    Check-LastCommand
+} else {
+    Write-Host "Nenhuma alteração encontrada. Pulando o commit."
+}
 
 Write-Host "=== Iniciando automação de Git para a versão $version ===" -ForegroundColor Green
 
