@@ -71,20 +71,21 @@ Check-LastCommand
 git push origin develop
 Check-LastCommand
 
-# 3. Criar uma feature branch (se não existir localmente ou remotamente)
-Write-Host "3. Criando a feature branch: $featureBranch" -ForegroundColor Yellow
+# 3. Criar ou trocar para a feature branch
+Write-Host "3. Verificando se a feature branch $featureBranch existe" -ForegroundColor Yellow
 if (-not (CheckBranchExistsLocal $featureBranch)) {
     if (CheckBranchExistsRemote $featureBranch) {
         Write-Host "Branch $featureBranch já existe remotamente. Trazendo para local." -ForegroundColor Yellow
         git fetch origin $featureBranch
-        git checkout -b $featureBranch origin/$featureBranch
+        git checkout $featureBranch
         Check-LastCommand
     } else {
+        Write-Host "Criando a branch $featureBranch" -ForegroundColor Yellow
         git checkout -b $featureBranch
         Check-LastCommand
     }
 } else {
-    Write-Host "Branch $featureBranch já existe localmente. Pulando criação." -ForegroundColor Yellow
+    Write-Host "Branch $featureBranch já existe localmente. Alternando para ela." -ForegroundColor Yellow
     git checkout $featureBranch
     Check-LastCommand
 }
