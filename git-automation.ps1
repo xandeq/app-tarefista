@@ -48,7 +48,7 @@ if (CheckPendingChanges) {
     git commit -m $commitMessage
     Check-LastCommand
 } else {
-    Write-Host "Nenhuma alteração para commitar na branch main." -ForegroundColor Yellow
+    Write-Host "Nenhuma alteração para commitar na branch main. Continuando..." -ForegroundColor Yellow
 }
 
 git pull origin main --rebase  # Garantir que a branch esteja atualizada
@@ -97,7 +97,7 @@ if (CheckPendingChanges) {
     git commit -m $commitMessage
     Check-LastCommand
 } else {
-    Write-Host "Nenhuma alteração para commitar na feature branch $featureBranch." -ForegroundColor Yellow
+    Write-Host "Nenhuma alteração para commitar na feature branch $featureBranch. Continuando..." -ForegroundColor Yellow
 }
 
 git push origin $featureBranch
