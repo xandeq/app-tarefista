@@ -3,6 +3,14 @@ param(
     [string]$commitMessage   # Mensagem do commit
 )
 
+if (git status --porcelain) {
+    git add .
+    git commit -m $commitMessage
+} else {
+    Write-Host "Nenhuma alteração encontrada. Pulando o commit."
+}
+
+
 # Função para verificar o último comando
 function Check-LastCommand {
     if ($LASTEXITCODE -ne 0) {
