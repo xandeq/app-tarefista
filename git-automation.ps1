@@ -12,13 +12,22 @@ function Check-LastCommand {
     }
 }
 
-# Função para verificar se a branch existe
-function CheckBranchExists {
+# Função para verificar se a branch existe localmente
+function CheckBranchExistsLocal {
     param(
         [string]$branch
     )
     $branches = git branch --list $branch
     return $branches -ne ""
+}
+
+# Função para verificar se a branch existe remotamente
+function CheckBranchExistsRemote {
+    param(
+        [string]$branch
+    )
+    $remoteBranches = git ls-remote --heads origin $branch
+    return $remoteBranches -ne ""
 }
 
 # Função para checar se há algo para commitar
@@ -62,14 +71,21 @@ Check-LastCommand
 git push origin develop
 Check-LastCommand
 
-# 3. Criar uma feature branch (se não existir)
+# 3. Criar uma feature branch (se não existir localmente ou remotamente)
 Write-Host "3. Criando a feature branch: $featureBranch" -ForegroundColor Yellow
-if (-not (CheckBranchExists $featureBranch)) {
-    git checkout -b $featureBranch
-    Check-LastCommand
+if (-not (CheckBranchExistsLocal $featureBranch)) {
+    if (CheckBranchExistsRemote $featureBranch) {
+        Write-Host "Branch $featureBranch já existe remotamente. Trazendo para local." -ForegroundColor Yellow
+        git checkout -b $featureBranch origin/$featureBranch
+        Check-LastCommand
+    } else {
+        git checkout -b $featureBranch
+        Check-LastCommand
+    }
 } else {
-    Write-Host "Branch $featureBranch já existe. Pulando criação." -ForegroundColor Yellow
+    Write-Host "Branch $featureBranch já existe localmente. Pulando criação." -ForegroundColor Yellow
     git checkout $featureBranch
+    Check-LastCommand
 }
 
 if (CheckPendingChanges) {
