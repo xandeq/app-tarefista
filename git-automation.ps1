@@ -73,36 +73,30 @@ Check-LastCommand
 
 # 3. Criar ou trocar para a feature branch
 Write-Host "3. Verificando se a feature branch $featureBranch existe" -ForegroundColor Yellow
+
 if (-not (CheckBranchExistsLocal $featureBranch)) {
     if (CheckBranchExistsRemote $featureBranch) {
         Write-Host "Branch $featureBranch já existe remotamente. Trazendo para local." -ForegroundColor Yellow
         git fetch origin $featureBranch
-        git checkout $featureBranch
-        Check-LastCommand
+        if ($LASTEXITCODE -eq 0) {
+            git checkout $featureBranch
+            Check-LastCommand
+        } else {
+            Write-Host "Erro ao fazer fetch da branch remota. Continuando o script." -ForegroundColor Yellow
+        }
     } else {
         Write-Host "Criando a branch $featureBranch" -ForegroundColor Yellow
         git checkout -b $featureBranch
         Check-LastCommand
     }
 } else {
-    Write-Host "Branch $featureBranch já existe localmente. Alternando para ela." -ForegroundColor Yellow
+    Write-Host "Branch $featureBranch já existe localmente. Tentando alternar para ela." -ForegroundColor Yellow
     git checkout $featureBranch
-    Check-LastCommand
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Erro ao alternar para a branch $featureBranch. Continuando o script mesmo assim." -ForegroundColor Yellow
+        # Continue sem abortar, já que a branch já existe localmente
+    }
 }
-
-git pull origin $featureBranch --rebase  # Sincronizar a branch caso ela já exista localmente
-Check-LastCommand
-
-if (CheckPendingChanges) {
-    git add .
-    git commit -m $commitMessage
-    Check-LastCommand
-} else {
-    Write-Host "Nenhuma alteração para commitar na feature branch $featureBranch. Continuando..." -ForegroundColor Yellow
-}
-
-git push origin $featureBranch
-Check-LastCommand
 
 # 4. Voltar para develop e fazer merge da feature branch
 Write-Host "4. Fazendo merge da feature branch com a develop" -ForegroundColor Yellow
