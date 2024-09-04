@@ -76,6 +76,7 @@ Write-Host "3. Criando a feature branch: $featureBranch" -ForegroundColor Yellow
 if (-not (CheckBranchExistsLocal $featureBranch)) {
     if (CheckBranchExistsRemote $featureBranch) {
         Write-Host "Branch $featureBranch já existe remotamente. Trazendo para local." -ForegroundColor Yellow
+        git fetch origin $featureBranch
         git checkout -b $featureBranch origin/$featureBranch
         Check-LastCommand
     } else {
