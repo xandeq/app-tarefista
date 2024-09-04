@@ -89,6 +89,9 @@ if (-not (CheckBranchExistsLocal $featureBranch)) {
     Check-LastCommand
 }
 
+git pull origin $featureBranch --rebase  # Sincronizar a branch caso ela já exista localmente
+Check-LastCommand
+
 if (CheckPendingChanges) {
     git add .
     git commit -m $commitMessage
