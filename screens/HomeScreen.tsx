@@ -27,6 +27,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null); // Declare the 'userId' variable
+  const [quote, setQuote] = useState<string>("");
 
   // Função para buscar as tarefas do usuário
   const fetchTasks = async (userId: string) => {
@@ -67,6 +68,20 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
       setLoading(false);
     }
   };
+
+  const fetchQuote = async () => {
+    try {
+      const response = await axios.get(
+        "https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/phrases"
+      );
+      const { phrase } = response.data;  // A API retorna um objeto com a chave 'phrase'
+      return phrase;
+    } catch (error) {
+      console.error("Error fetching phrase: ", error);
+      return "Erro ao buscar frase";
+    }
+  };
+  
 
   const saveTasks = async (updatedTasks: any[]) => {
     try {
@@ -133,13 +148,15 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
       const fetchedUserId = await fetchUserId();
       console.log("fetchedUserId:", fetchedUserId);
       if (fetchedUserId) {
-        await fetchTasks(fetchedUserId); // Chama fetchTasks com o userId obtido
+        await fetchTasks(fetchedUserId);
+      } else {
+        setLoading(false); // Garantir que o loading pare mesmo que o userId não seja encontrado
       }
+      const fetchedQuote = await fetchQuote();
+      setQuote(fetchedQuote);
     };
 
-    //if (route.params?.taskUpdated) {
     loadUserIdAndTasks();
-    //}
 
     const unsubscribe = navigation.addListener("focus", () => {
       if (userId) {
@@ -148,7 +165,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
     });
 
     return unsubscribe;
-  }, [navigation, userId, route.params?.taskUpdated]);
+  }, [navigation, userId, route.params?.taskUpdated]); // Certifique-se que taskUpdated é monitorado
+  // Certifique-se que taskUpdated é monitorado
 
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => {
@@ -182,6 +200,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
 
   return (
     <View style={styles.container}>
+      <View style={styles.quoteContainer}>
+        <Text style={styles.quoteText}>{quote}</Text>
+      </View>
       <Animated.View style={[styles.addButton, animatedStyle]}>
         <TouchableOpacity
           onPressIn={handlePressIn}
@@ -275,6 +296,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 10,
     color: "#666",
+  },
+  quoteContainer: {
+    marginVertical: 20,
+    alignItems: "center",
+    paddingHorizontal: 10,
+  },
+  quoteText: {
+    fontSize: 16,
+    fontStyle: "italic",
+    color: "#555",
+    textAlign: "center",
   },
 });
 

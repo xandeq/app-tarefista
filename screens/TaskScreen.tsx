@@ -4,6 +4,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  View,
 } from "react-native";
 import { Text, TextInput, Button, Appbar, Snackbar } from "react-native-paper";
 import Animated, { SlideInUp } from "react-native-reanimated";
@@ -12,6 +13,7 @@ import "firebase/compat/firestore";
 import firebase from "firebase/compat/app";
 import { getTaskCount, incrementTaskCount } from "../utils/taskTracker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import LottieView from "lottie-react-native";
 
 interface TaskScreenProps {
   navigation: any;
@@ -171,10 +173,20 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
           <Appbar.Action icon="trash-can" onPress={confirmDelete} color="red" />
         )}
       </Appbar.Header>
+
+      {/* Animação Lottie aqui */}
       <Animated.View entering={SlideInUp} style={styles.content}>
-        <Text variant="headlineLarge" style={styles.title}>
-          {taskToEdit ? "Edit Tarefa" : "Nova Tarefa"}
-        </Text>
+        <View style={styles.titleContainer}>
+        <LottieView
+            source={require("../assets/cleaning.json")} // Caminho para o arquivo .json da animação
+            autoPlay
+            loop
+            style={styles.iconAnimation}
+          />
+          <Text variant="headlineLarge" style={styles.title}>
+            Nova Tarefa
+          </Text>
+        </View>
         <TextInput
           mode="outlined"
           label="Descrição da tarefa"
@@ -194,7 +206,7 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
               color="#fff"
             />
           )}
-          buttonColor="#FF6F61" // Changed to a color from the logo
+          buttonColor="#FF6F61"
         >
           {taskToEdit ? "Salvar" : "Adicionar"}
         </Button>
@@ -242,6 +254,23 @@ const styles = StyleSheet.create({
   snackbar: {
     backgroundColor: "#FF6F61",
   },
+  lottie: {
+    width: 150,
+    height: 150,
+    marginBottom: 20,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  iconAnimation: {
+    width: 48,  // Tamanho pequeno para o ícone de animação
+    height: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  }
 });
 
 export default TaskScreen;
