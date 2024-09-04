@@ -98,16 +98,22 @@ if (-not (CheckBranchExistsLocal $featureBranch)) {
     }
 }
 
-# 4. Voltar para develop e fazer merge da feature branch
+# 4. Fazer merge da feature branch com a develop
 Write-Host "4. Fazendo merge da feature branch com a develop" -ForegroundColor Yellow
+
+# Certifica que estamos na develop antes de tentar o merge
 git checkout develop
 Check-LastCommand
 
+# Tenta fazer o merge da feature branch com a develop
 git merge $featureBranch
-Check-LastCommand
 
-git push origin develop
-Check-LastCommand
+# Verifica o resultado do merge
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Não foi possível fazer merge da feature branch $featureBranch com a develop. Continuando o script." -ForegroundColor Yellow
+} else {
+    Write-Host "Merge da feature branch com a develop concluído com sucesso." -ForegroundColor Green
+}
 
 # 5. Criar uma tag para a versão
 Write-Host "5. Criando a tag para a versão $version" -ForegroundColor Yellow
