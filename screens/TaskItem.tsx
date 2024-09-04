@@ -115,7 +115,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
         <TouchableOpacity onPress={handleCompleteWithEffect}>
           <Icon
             name={task.completed ? "checkmark-circle" : "ellipse-outline"}
-            size={24}
+            size={36}
             color={task.completed ? "green" : "gray"}
           />
         </TouchableOpacity>
