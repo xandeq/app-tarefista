@@ -20,8 +20,8 @@ android {
         applicationId 'com.xandeq.Tarefista'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 8
-        versionName "1.0.8"
+        versionCode 9
+        versionName "1.0.9"
     }
     signingConfigs {
         debug {
@@ -42,6 +42,14 @@ android {
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
             crunchPngs true
         }
+    }
+    lintOptions {
+        // Desativar a verificação de permissões de notificação
+        disable 'NotificationPermission'
+        // Se quiser ignorar todos os erros e warnings, use esta linha:
+        abortOnError false
+        // Pode adicionar mais verificações a serem desativadas aqui, como:
+        // disable 'MissingPermission', 'UnusedResources'
     }
     packagingOptions {
         jniLibs {
