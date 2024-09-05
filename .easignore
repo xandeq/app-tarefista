@@ -1,0 +1,16 @@
+# Ignorar diretórios e arquivos não necessários no processo de build
+node_modules/
+android/.gradle/
+android/.idea/
+android/.cxx/
+android/build/
+ios/Pods/
+ios/build/
+
+# Ignorar arquivos de configuração locais
+*.log
+*.env
+*.local
+*.test
+*.spec.js
+*.md
