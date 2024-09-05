@@ -17,7 +17,6 @@ import Animated, {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import LottieView from "lottie-react-native";
-import moment from "moment"; // Biblioteca para manipular datas
 
 interface HomeScreenProps {
   navigation: any;
@@ -27,25 +26,42 @@ interface HomeScreenProps {
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null); // Declare the 'userId' variable
   const [quote, setQuote] = useState<string>("");
-  const [days, setDays] = useState<any[]>([]);
 
+  // Função para buscar as tarefas do usuário
   const fetchTasks = async (userId: string) => {
     try {
       let token = await AsyncStorage.getItem("authToken");
+
       if (!token) {
+        console.log("Token fetchTasks is null, using tempUserId instead");
         token = await AsyncStorage.getItem("tempUserId");
       }
-      if (!token) return;
+
+      if (!token) {
+        console.error("No authToken or tempUserId found, cannot fetch tasks");
+        return;
+      }
+
+      console.log("Token fetchTasks:", token);
 
       const response = await axios.get(
         "https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks",
         {
-          params: { tempUserId: userId },
+          // headers: {
+          //   Authorization: `Bearer ${token}`,
+          // },
+          params: { tempUserId: userId }, // Pass the userId or tempUserId here
         }
       );
-      setTasks(response.data);
+
+      if (response.data) {
+        console.log("Tasks fetched:", response.data);
+        setTasks(response.data);
+      } else {
+        console.error("Error fetching tasks:", response.statusText);
+      }
     } catch (error) {
       console.error("Error fetching tasks:", error);
     } finally {
@@ -58,74 +74,240 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
       const response = await axios.get(
         "https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/phrases"
       );
-      const { phrase } = response.data;
+      const { phrase } = response.data;  // A API retorna um objeto com a chave 'phrase'
       return phrase;
     } catch (error) {
       console.error("Error fetching phrase: ", error);
       return "Erro ao buscar frase";
     }
   };
+  
 
-  const generateDays = () => {
-    const today = moment();
-    const weekDays = [];
-    for (let i = 0; i < 30; i++) {
-      const day = today.clone().add(i, "days");
-      weekDays.push({
-        dayName: day.format("ddd").toUpperCase(),
-        dayNumber: day.format("DD"),
-      });
+  const saveTasks = async (updatedTasks: any[]) => {
+    try {
+      await AsyncStorage.setItem("tasks", JSON.stringify(updatedTasks));
+      setTasks(updatedTasks);
+    } catch (error) {
+      console.error("Error saving tasks:", error);
     }
-    setDays(weekDays);
   };
 
+  // Função para obter o userId do AsyncStorage ou da API
   const fetchUserId = async () => {
     try {
+      console.log("fetchUserId HOME");
+      // Primeiro, verifique se o userId já está no AsyncStorage
       let storedUserId = await AsyncStorage.getItem("tempUserId");
-      if (!storedUserId) {
-        const token = await AsyncStorage.getItem("authToken");
-        if (!token) return null;
-        const response = await fetch(
-          "https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/userId",
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        const data = await response.json();
-        await AsyncStorage.setItem("tempUserId", data.userId);
-        storedUserId = data.userId;
+      if (storedUserId) {
+        console.log("User ID found in AsyncStorage:", storedUserId);
+        setUserId(storedUserId);
+        return storedUserId;
       }
-      setUserId(storedUserId);
-      return storedUserId;
+
+      // Se o userId não estiver armazenado, busque o authToken
+      const token = await AsyncStorage.getItem("authToken");
+      if (!token) {
+        console.log("No authToken found in AsyncStorage");
+        return null;
+      }
+      console.log("Token fetchUserId:", token);
+
+      // Faça a chamada à API para obter o userId
+      const response = await fetch(
+        "https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/userId",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("User ID from API:", data.userId);
+
+        // Armazene o userId no AsyncStorage para uso futuro
+        await AsyncStorage.setItem("tempUserId", data.userId);
+        setUserId(data.userId);
+        return data.userId;
+      } else {
+        console.error("Error fetching user ID:", await response.text());
+        return null;
+      }
     } catch (error) {
       console.error("Error fetching user ID:", error);
       return null;
     }
   };
 
+  // useEffect para carregar o userId e as tarefas ao montar o componente
   useEffect(() => {
+    console.log("useEffect HomeScreen");
     const loadUserIdAndTasks = async () => {
       const fetchedUserId = await fetchUserId();
+      console.log("fetchedUserId:", fetchedUserId);
       if (fetchedUserId) {
         await fetchTasks(fetchedUserId);
       } else {
-        setLoading(false);
+        setLoading(false); // Garantir que o loading pare mesmo que o userId não seja encontrado
       }
       const fetchedQuote = await fetchQuote();
       setQuote(fetchedQuote);
-      generateDays();
     };
 
     loadUserIdAndTasks();
 
     const unsubscribe = navigation.addListener("focus", () => {
       if (userId) {
-        fetchTasks(userId);
+        fetchTasks(userId); // Chama fetchTasks com o userId do estado
       }
     });
 
     return unsubscribe;
- 
+  }, [navigation, userId, route.params?.taskUpdated]); // Certifique-se que taskUpdated é monitorado
+  // Certifique-se que taskUpdated é monitorado
+
+  const scale = useSharedValue(1);
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+    };
+  });
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.9);
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1);
+  };
+
+  const handleEditTask = (task: any) => {
+    navigation.navigate("Tasks", { task: task });
+  };
+
+  const handleRemoveTask = (taskId: string) => {
+    console.log("handleRemoveTask Removing task with id: ", taskId);
+    setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
+  };
+
+  const handleLogout = async () => {
+    await AsyncStorage.removeItem("authToken");
+    console.log("authToken removido do AsyncStorage");
+    // Redirecione o usuário para a tela de login ou inicial
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.quoteContainer}>
+        <Text style={styles.quoteText}>{quote}</Text>
+      </View>
+      <Animated.View style={[styles.addButton, animatedStyle]}>
+        <TouchableOpacity
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          onPress={() => navigation.navigate("Tasks", { taskId: null })}
+        >
+          <Icon name="add-circle" size={56} color="#FFFFFF" />
+        </TouchableOpacity>
+      </Animated.View>
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" />
+      ) : tasks.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <LottieView
+            source={require("../assets/empty-box.json")} // Caminho para o arquivo .json da animação
+            autoPlay
+            loop
+            style={styles.animation}
+          />
+          <Text style={styles.emptyMessage}>Nenhuma tarefa encontrada!</Text>
+          <Text style={styles.subMessage}>
+            Adicione novas tarefas para vê-las aqui.
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={tasks}
+          style={styles.flatList}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <TaskItem
+              task={item}
+              onEdit={handleEditTask}
+              onRemove={handleRemoveTask}
+              refreshTasks={() => fetchTasks(userId!)}
+            />
+          )}
+        />
+      )}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
+  },
+  title: {
+    fontSize: 24,
+    marginBottom: 20,
+  },
+  addButton: {
+    position: "absolute",
+    right: 20,
+    bottom: 20,
+    backgroundColor: "#ff6347",
+    borderRadius: 25,
+    padding: 10,
+    elevation: 5,
+    zIndex: 1,
+  },
+  flatList: {
+    width: "100%",
+  },
+  logo: {
+    width: "100%",
+    height: 70,
+    marginBottom: 20,
+    resizeMode: "contain", // Ensures the image maintains its aspect ratio
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  animation: {
+    width: 150,
+    height: 150,
+  },
+  emptyMessage: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginTop: 20,
+    color: "#333",
+  },
+  subMessage: {
+    fontSize: 14,
+    marginTop: 10,
+    color: "#666",
+  },
+  quoteContainer: {
+    marginVertical: 20,
+    alignItems: "center",
+    paddingHorizontal: 10,
+  },
+  quoteText: {
+    fontSize: 16,
+    fontStyle: "italic",
+    color: "#555",
+    textAlign: "center",
+  },
+});
+
+export default HomeScreen;
