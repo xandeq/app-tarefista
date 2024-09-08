@@ -11,19 +11,33 @@ def jscFlavor = 'org.webkit:android-jsc:+'
 def enableProguardInReleaseBuilds = false
 
 android {
-    ndkVersion "26.1.10909125"
-    buildToolsVersion rootProject.ext.buildToolsVersion
-    compileSdk rootProject.ext.compileSdkVersion
-
+    compileSdkVersion 34
+    // ndkVersion "26.1.10909125"
+    // buildToolsVersion rootProject.ext.buildToolsVersion
     namespace 'com.xandeq.Tarefista'
+
     defaultConfig {
         applicationId 'com.xandeq.Tarefista'
-        minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
+        minSdkVersion 23
+        targetSdkVersion 34
         versionCode 10
         versionName "1.1.0"
     }
+    // Adicionando suporte ao CMake
+    // externalNativeBuild {
+    //     cmake {
+    //         path "CMakeLists.txt"  // Certifique-se de que o caminho correto esteja configurado
+    //         version "3.10.2"       // Mudar para a versão CMake que você está utilizando, por exemplo 3.10.2 ou 3.22.1
+    //     }
+    // }
     signingConfigs {
+         release {
+            keyAlias 'key0'
+            keyPassword 'Alexandre10#'
+            storeFile file('C:/Users/acq20/Desktop/Projetos/tarefista/app/android/release-key.keystore') // Caminho do arquivo keystore
+            storePassword 'Alexandre10#'
+        }
+
         debug {
             storeFile file('debug.keystore')
             storePassword 'android'
@@ -32,15 +46,15 @@ android {
         }
     }
     buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+
         debug {
             signingConfig signingConfigs.debug
-        }
-        release {
-            signingConfig signingConfigs.debug
-            shrinkResources false
-            minifyEnabled enableProguardInReleaseBuilds
-            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
-            crunchPngs true
         }
     }
     lintOptions {
