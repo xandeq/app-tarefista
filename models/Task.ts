@@ -1,10 +1,9 @@
-import firebase from "firebase/compat/app";
-
 export interface Task {
-    id: string;
-    text: string;
-    completed: boolean;
-    createdAt: firebase.firestore.Timestamp;
-    updatedAt: firebase.firestore.Timestamp;
-  }
-  
+  id?: string; // Opcional para novas tarefas
+  text: string;
+  completed: boolean;
+  createdAt: string;
+  updatedAt: string;
+  tempUserId?: string; // Opcional para usuários temporários
+  completionDate?: string;
+}

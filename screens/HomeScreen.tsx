@@ -17,6 +17,7 @@ import Animated, {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import LottieView from "lottie-react-native";
+import moment from "moment";
 
 interface HomeScreenProps {
   navigation: any;
@@ -74,14 +75,13 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
       const response = await axios.get(
         "https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/phrases"
       );
-      const { phrase } = response.data;  // A API retorna um objeto com a chave 'phrase'
+      const { phrase } = response.data; // A API retorna um objeto com a chave 'phrase'
       return phrase;
     } catch (error) {
       console.error("Error fetching phrase: ", error);
       return "Erro ao buscar frase";
     }
   };
-  
 
   const saveTasks = async (updatedTasks: any[]) => {
     try {
@@ -192,10 +192,19 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
     setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
   };
 
-  const handleLogout = async () => {
-    await AsyncStorage.removeItem("authToken");
-    console.log("authToken removido do AsyncStorage");
-    // Redirecione o usuário para a tela de login ou inicial
+  const renderDays = () => {
+    const today = moment(); // Dia atual
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const day = moment().add(i, "days");
+      const isToday = day.isSame(today, "day"); // Verifica se é o dia atual
+      days.push({
+        dayNumber: day.format("DD"),
+        dayName: day.format("ddd").toUpperCase(),
+        isToday: isToday,
+      });
+    }
+    return days;
   };
 
   return (
@@ -203,6 +212,35 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
       <View style={styles.quoteContainer}>
         <Text style={styles.quoteText}>{quote}</Text>
       </View>
+      <View style={styles.daysContainer}>
+        {renderDays().map((day, index) => (
+          <View
+            key={index}
+            style={[
+              styles.dayItem,
+              day.isToday && styles.currentDay, // Aplica o estilo se for o dia atual
+            ]}
+          >
+            <Text
+              style={[
+                styles.dayNumber,
+                day.isToday && styles.currentDayText, // Aplica o estilo do texto se for o dia atual
+              ]}
+            >
+              {day.dayNumber}
+            </Text>
+            <Text
+              style={[
+                styles.dayName,
+                day.isToday && styles.currentDayText, // Aplica o estilo do texto se for o dia atual
+              ]}
+            >
+              {day.dayName}
+            </Text>
+          </View>
+        ))}
+      </View>
+
       <Animated.View style={[styles.addButton, animatedStyle]}>
         <TouchableOpacity
           onPressIn={handlePressIn}
@@ -307,6 +345,33 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
     color: "#555",
     textAlign: "center",
+  },
+  daysContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 20,
+    width: "100%",
+  },
+  dayItem: {
+    alignItems: "center",
+  },
+  dayNumber: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  dayName: {
+    fontSize: 14,
+    color: "#555",
+  },
+  currentDay: {
+    borderColor: "#000", // Borda preta
+    borderWidth: 2,
+    backgroundColor: "#ff6347", // Cor de fundo vermelha
+    borderRadius: 8,
+    padding: 10,
+  },
+  currentDayText: {
+    color: "#fff", // Texto branco para destacar no fundo vermelho
   },
 });
 
