@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Text,
+  Alert,
 } from "react-native";
 import TaskItem from "./TaskItem";
 import Icon from "react-native-vector-icons/Ionicons";
@@ -207,10 +208,59 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
     return days;
   };
 
+  const deleteTaskById = async (taskId: string) => {
+    try {
+      const response = await fetch(
+        `https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks/${taskId}`,
+        {
+          method: "DELETE",
+        }
+      );
+      if (!response.ok) {
+        console.error("Erro ao deletar tarefa:", await response.text());
+      }
+    } catch (error) {
+      console.error("Erro ao deletar tarefa:", error);
+    }
+  };
+
+  // Função para deletar todas as tarefas
+  const deleteAllTasks = async () => {
+    try {
+      // Exibe uma confirmação antes de deletar
+      Alert.alert(
+        "Confirmação",
+        "Você tem certeza que deseja deletar todas as tarefas?",
+        [
+          { text: "Cancelar", style: "cancel" },
+          {
+            text: "Deletar",
+            style: "destructive",
+            onPress: async () => {
+              for (const task of tasks) {
+                await deleteTaskById(task.id);
+              }
+              setTasks([]); // Limpa a lista localmente após deletar
+            },
+          },
+        ],
+        { cancelable: true }
+      );
+    } catch (error) {
+      console.error("Erro ao deletar todas as tarefas:", error);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.quoteContainer}>
         <Text style={styles.quoteText}>{quote}</Text>
+      </View>
+      <View style={styles.header}>
+        <Text style={styles.title}>Tarefas</Text>
+        <TouchableOpacity onPress={deleteAllTasks}>
+          <Icon name="trash-bin" size={30} color="#FF6347" />
+        </TouchableOpacity>
       </View>
       <View style={styles.daysContainer}>
         {renderDays().map((day, index) => (
@@ -372,6 +422,13 @@ const styles = StyleSheet.create({
   },
   currentDayText: {
     color: "#fff", // Texto branco para destacar no fundo vermelho
+  },
+  header: {
+    display: "none",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
   },
 });
 

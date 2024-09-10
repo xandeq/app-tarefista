@@ -4,6 +4,6 @@ export interface Task {
   completed: boolean;
   createdAt: string;
   updatedAt: string;
-  tempUserId?: string; // Opcional para usuários temporários
+  tempUserId: string; // Opcional para usuários temporários
   completionDate?: string;
 }

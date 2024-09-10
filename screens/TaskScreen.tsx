@@ -14,6 +14,7 @@ import firebase from "firebase/compat/app";
 import { getTaskCount, incrementTaskCount } from "../utils/taskTracker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import LottieView from "lottie-react-native";
+import { Task } from "../models/Task"; // Importando o modelo Task
 
 interface TaskScreenProps {
   navigation: any;
@@ -22,15 +23,16 @@ interface TaskScreenProps {
 
 const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
   const [task, setTask] = useState<string>("");
+  const [tasks, setTasks] = useState<any[]>([]);
   const [error, setError] = useState<string>("");
   const [visible, setVisible] = useState<boolean>(false);
-  const taskToEdit = route.params?.task;
+  const taskToEdit: Task = route.params?.task;
 
   useEffect(() => {
-    if (route.params?.task) {
-      setTask(route.params.task.text);
+    if (taskToEdit) {
+      setTask(taskToEdit.text);
     }
-  }, [route.params?.task]);
+  }, [taskToEdit]);
 
   const saveTask = async () => {
     if (task.trim() === "") {
@@ -38,6 +40,7 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
       setVisible(true);
       return;
     }
+
     if (!taskToEdit) {
       // Check if user is unregistered and limit exceeded
       const taskCount = await getTaskCount();
@@ -49,15 +52,22 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
         return;
       }
     }
+
     const tempUserId = await AsyncStorage.getItem("tempUserId");
     const timestamp = new Date().toISOString();
+
+    const taskPayload: Task = {
+      text: task,
+      completed: taskToEdit?.completed || false,
+      createdAt: taskToEdit?.createdAt || timestamp,
+      updatedAt: timestamp,
+      tempUserId: tempUserId ?? "",
+    };
+
     try {
       let response;
       if (taskToEdit) {
         // Edit existing task
-        console.log("Timestamp: ", timestamp);
-        console.log("Task 1: ", taskToEdit);
-        console.log("taskToEdit.text: ", taskToEdit.text);
         response = await fetch(
           `https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks/${taskToEdit.id}`,
           {
@@ -65,19 +75,12 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({
-              text: task,
-              completed: taskToEdit.completed,
-              createdAt: taskToEdit.createdAt,
-              updatedAt: timestamp,
-              tempUserId: tempUserId,
-            }),
+            body: JSON.stringify(taskPayload),
           }
         );
       } else {
-        // add new task
-        console.log("Timestamp: ", timestamp);
-        console.log("Task 2: ", task);
+        console.log("taskPayload: ", taskPayload);
+        // Add new task
         response = await fetch(
           "https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks",
           {
@@ -85,44 +88,24 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({
-              text: task,
-              completed: false,
-              createdAt: timestamp,
-              updatedAt: timestamp,
-              tempUserId: tempUserId,
-            }),
+            body: JSON.stringify(taskPayload),
           }
         );
       }
 
       if (response.ok) {
         console.log("response: ", response);
-        const tempUserId = await AsyncStorage.getItem("tempUserId");
-        await incrementTaskCount();
-        // Tente converter diretamente para JSON
-        let data;
-        try {
-          // Tentativa de converter para JSON
-          data = await response.json();
-          console.log("Dados JSON:", data);
-        } catch (error) {
-          // Se a conversão para JSON falhar, trate como texto simples
-          console.error("Erro ao analisar JSON:", error);
-        }
+        const data = await response.json();
 
         if (!tempUserId && data.tempUserId) {
           await AsyncStorage.setItem("tempUserId", data.tempUserId);
         }
-        if (response.ok) {
-          navigation.navigate("Home", { taskUpdated: true }); // Sinalizando que uma tarefa foi atualizada
-        } else {
-          const errorMessage = await response.text();
-          console.error("Erro ao salvar tarefa 1: ", errorMessage);
-        }
+
+        await incrementTaskCount();
+        navigation.navigate("Home", { taskUpdated: true }); // Sinalizando que uma tarefa foi atualizada
       } else {
         const errorMessage = await response.text();
-        console.error("Erro ao salvar tarefa 2: ", errorMessage);
+        console.error("Erro ao salvar tarefa 1: ", errorMessage);
       }
     } catch (error) {
       console.error("Erro ao salvar tarefa 3: ", error);
@@ -174,11 +157,10 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
         )}
       </Appbar.Header>
 
-      {/* Animação Lottie aqui */}
       <Animated.View entering={SlideInUp} style={styles.content}>
         <View style={styles.titleContainer}>
-        <LottieView
-            source={require("../assets/cleaning.json")} // Caminho para o arquivo .json da animação
+          <LottieView
+            source={require("../assets/cleaning.json")}
             autoPlay
             loop
             style={styles.iconAnimation}
@@ -236,7 +218,7 @@ const styles = StyleSheet.create({
   },
   title: {
     marginBottom: 20,
-    color: "#FF6F61", // Changed to a color from the logo
+    color: "#FF6F61", 
     fontSize: 24,
     fontWeight: "bold",
   },
@@ -265,7 +247,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   iconAnimation: {
-    width: 48,  // Tamanho pequeno para o ícone de animação
+    width: 48,
     height: 48,
     flexDirection: 'row',
     alignItems: 'center',
