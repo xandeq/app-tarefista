@@ -19,6 +19,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import LottieView from "lottie-react-native";
 import moment from "moment";
+import { Task } from "../models/Task";
 
 interface HomeScreenProps {
   navigation: any;
@@ -30,6 +31,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null); // Declare the 'userId' variable
   const [quote, setQuote] = useState<string>("");
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
 
   // Função para buscar as tarefas do usuário
   const fetchTasks = async (userId: string) => {
@@ -167,8 +170,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
 
     return unsubscribe;
   }, [navigation, userId, route.params?.taskUpdated]); // Certifique-se que taskUpdated é monitorado
-  // Certifique-se que taskUpdated é monitorado
 
+  useEffect(() => {
+    setFilteredTasks(filterTasksByDate(tasks, selectedDate));
+  }, [selectedDate, tasks]); // Monitorar selectedDate e tasks
+
+  // Certifique-se que taskUpdated é monitorado
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -203,9 +210,40 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
         dayNumber: day.format("DD"),
         dayName: day.format("ddd").toUpperCase(),
         isToday: isToday,
+        fullDate: day.toDate(), // Guarda a data completa para facilitar o uso
       });
     }
     return days;
+    // .map((day, index) => (
+    //   <TouchableOpacity
+    //     key={index}
+    //     onPress={() => setSelectedDate(day.fullDate)} // Atualiza a data selecionada
+    //   >
+    //     <View
+    //       style={[
+    //         styles.dayItem,
+    //         day.isToday && styles.currentDay, // Aplica o estilo se for o dia atual
+    //       ]}
+    //     >
+    //       <Text
+    //         style={[
+    //           styles.dayNumber,
+    //           day.isToday && styles.currentDayText, // Aplica o estilo do texto se for o dia atual
+    //         ]}
+    //       >
+    //         {day.dayNumber}
+    //       </Text>
+    //       <Text
+    //         style={[
+    //           styles.dayName,
+    //           day.isToday && styles.currentDayText, // Aplica o estilo do texto se for o dia atual
+    //         ]}
+    //       >
+    //         {day.dayName}
+    //       </Text>
+    //     </View>
+    //   </TouchableOpacity>
+    // ));
   };
 
   const deleteTaskById = async (taskId: string) => {
@@ -251,6 +289,25 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
     }
   };
 
+  const filterTasksByDate = (tasks: Task[], selectedDate: Date): Task[] => {
+    return tasks.filter((task) => {
+      const taskStartDate = task.startDate
+        ? new Date(task.startDate)
+        : new Date();
+      const taskEndDate = task.endDate ? new Date(task.endDate) : null;
+
+      // Verificar se a tarefa é recorrente ou tem data específica de execução
+      if (task.isRecurring) {
+        return (
+          taskStartDate <= selectedDate &&
+          (!taskEndDate || taskEndDate >= selectedDate)
+        );
+      } else {
+        return taskStartDate.toDateString() === selectedDate.toDateString();
+      }
+    });
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.quoteContainer}>
@@ -263,7 +320,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
         </TouchableOpacity>
       </View>
       <View style={styles.daysContainer}>
-        {renderDays().map((day, index) => (
+        {renderDays().map((day: any, index: any) => (
           <View
             key={index}
             style={[

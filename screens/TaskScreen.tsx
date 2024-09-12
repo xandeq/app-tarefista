@@ -60,10 +60,22 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
       setTask(taskToEdit.text);
       setIsRecurring(taskToEdit.isRecurring || false);
       setRecurrencePattern(taskToEdit.recurrencePattern || "daily");
-      setStartDate(
-        taskToEdit.startDate ? new Date(taskToEdit.startDate) : new Date()
-      );
-      setEndDate(taskToEdit.endDate ? new Date(taskToEdit.endDate) : undefined);
+      if (taskToEdit.startDate) {
+        const parsedStartDate = new Date(taskToEdit.startDate);
+        setStartDate(
+          isNaN(parsedStartDate.getTime()) ? new Date() : parsedStartDate
+        );
+      } else {
+        setStartDate(new Date());
+      }
+
+      // Verifica e converte endDate para Date
+      if (taskToEdit.endDate) {
+        const parsedEndDate = new Date(taskToEdit.endDate);
+        setEndDate(isNaN(parsedEndDate.getTime()) ? undefined : parsedEndDate);
+      } else {
+        setEndDate(undefined);
+      }
     }
   }, [taskToEdit]);
 
@@ -102,10 +114,8 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
       userId: taskToEdit?.userId || "",
       text: task,
       completed: taskToEdit?.completed || false,
-      createdAt: taskToEdit?.createdAt
-        ? new Date(taskToEdit.createdAt._seconds * 1000) // Converter de timestamp para Date
-        : new Date(), // Se for uma nova tarefa
-      updatedAt: new Date().toISOString(), // Nova data de atualização como string ISO
+      createdAt: taskToEdit?.createdAt,
+      updatedAt: new Date().toISOString(),
       tempUserId: tempUserId ?? "",
       isRecurring: isRecurring,
       recurrencePattern: isRecurring ? recurrencePattern : undefined,
@@ -179,7 +189,7 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
         // Caso o erro seja de outro tipo (por exemplo, um objeto ou string)
         console.error("Erro inesperado ao salvar tarefa 3:", error);
       }
-    }    
+    }
   };
 
   const deleteTask = async () => {
@@ -221,7 +231,17 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
       style={styles.container}
     >
       <Appbar.Header>
-        <Appbar.Action icon="close" onPress={() => navigation.goBack()} />
+        <Appbar.Action
+          icon="close"
+          onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.navigate("HomeTab"); // Ou navegue para uma tela inicial
+            }
+          }}
+        />
+
         {taskToEdit && (
           <Appbar.Action icon="trash-can" onPress={confirmDelete} color="red" />
         )}
@@ -280,10 +300,10 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
         {showStartDatePicker && (
           <DateTimePicker
             mode="date"
-            value={startDate}
+            value={startDate || new Date()} // Garantir que sempre passe uma data válida
             onChange={(event: any, selectedDate: any) => {
               setShowStartDatePicker(false);
-              setStartDate(selectedDate || new Date());
+              setStartDate(selectedDate || new Date()); // Atualiza com uma data válida
             }}
           />
         )}
@@ -297,7 +317,7 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
             {showEndDatePicker && (
               <DateTimePicker
                 mode="date"
-                value={endDate || new Date()}
+                value={endDate || new Date()} // Garantir que sempre passe uma data válida
                 onChange={(event: any, selectedDate: any) => {
                   setShowEndDatePicker(false);
                   setEndDate(selectedDate || undefined);

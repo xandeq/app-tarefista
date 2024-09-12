@@ -1,6 +1,6 @@
 param(
-    [string]$featureBranch,  # Nome da nova feature branch
-    [string]$commitMessage,  # Mensagem do commit
+    [string]$featureBranch, # Nome da nova feature branch
+    [string]$commitMessage, # Mensagem do commit
     [string]$version = ""        # Versão da aplicação
 )
 
@@ -47,7 +47,8 @@ if (CheckPendingChanges) {
     git add .
     git commit -m $commitMessage
     Check-LastCommand
-} else {
+}
+else {
     Write-Host "Nenhuma alteração para commitar na branch main. Continuando..." -ForegroundColor Yellow
 }
 
@@ -81,20 +82,26 @@ if (-not (CheckBranchExistsLocal $featureBranch)) {
         if ($LASTEXITCODE -eq 0) {
             git checkout $featureBranch
             Check-LastCommand
-        } else {
+        }
+        else {
             Write-Host "Erro ao fazer fetch da branch remota. Continuando o script." -ForegroundColor Yellow
         }
-    } else {
+    }
+    else {
         Write-Host "Criando a branch $featureBranch" -ForegroundColor Yellow
         git checkout -b $featureBranch
         Check-LastCommand
     }
-} else {
+}
+else {
     Write-Host "Branch $featureBranch já existe localmente. Tentando alternar para ela." -ForegroundColor Yellow
     git checkout $featureBranch
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "Erro ao alternar para a branch $featureBranch. Continuando o script mesmo assim." -ForegroundColor Yellow
-        # Continue sem abortar, já que a branch já existe localmente
+        Write-Host "Erro ao alternar para a branch $featureBranch. Tentando criar a branch localmente." -ForegroundColor Yellow
+        git checkout -b $featureBranch
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "Erro ao alternar ou criar a branch $featureBranch. Continuando o script mesmo assim." -ForegroundColor Yellow
+        }
     }
 }
 
@@ -111,7 +118,8 @@ git merge $featureBranch
 # Verifica o resultado do merge
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Não foi possível fazer merge da feature branch $featureBranch com a develop. Continuando o script." -ForegroundColor Yellow
-} else {
+}
+else {
     Write-Host "Merge da feature branch com a develop concluído com sucesso." -ForegroundColor Green
 }
 
