@@ -6,15 +6,31 @@ import {
   Alert,
   View,
 } from "react-native";
-import { Text, TextInput, Button, Appbar, Snackbar } from "react-native-paper";
+import {
+  Text,
+  TextInput,
+  Button,
+  Appbar,
+  Snackbar,
+  Checkbox,
+  Menu,
+} from "react-native-paper";
 import Animated, { SlideInUp } from "react-native-reanimated";
 import Icon from "react-native-vector-icons/Ionicons";
-import "firebase/compat/firestore";
-import firebase from "firebase/compat/app";
 import { getTaskCount, incrementTaskCount } from "../utils/taskTracker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import LottieView from "lottie-react-native";
 import { Task } from "../models/Task"; // Importando o modelo Task
+import DateTimePicker from "@react-native-community/datetimepicker";
+
+const recurrenceOptions = [
+  { label: "Daily", value: "daily" },
+  { label: "Weekdays", value: "weekdays" },
+  { label: "Weekly", value: "weekly" },
+  { label: "Monthly", value: "monthly" },
+  { label: "Yearly", value: "yearly" },
+  { label: "Custom", value: "custom" },
+];
 
 interface TaskScreenProps {
   navigation: any;
@@ -26,44 +42,80 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
   const [tasks, setTasks] = useState<any[]>([]);
   const [error, setError] = useState<string>("");
   const [visible, setVisible] = useState<boolean>(false);
+  const [isRecurring, setIsRecurring] = useState<boolean>(true);
+  const [recurrencePattern, setRecurrencePattern] = useState<string>("daily"); // Default to daily
+  const [startDate, setStartDate] = useState<Date>(new Date());
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
   const taskToEdit: Task = route.params?.task;
+
+  const calculatedEndDate = endDate
+    ? endDate
+    : new Date(new Date().setFullYear(new Date().getFullYear() + 5));
 
   useEffect(() => {
     if (taskToEdit) {
       setTask(taskToEdit.text);
+      setIsRecurring(taskToEdit.isRecurring || false);
+      setRecurrencePattern(taskToEdit.recurrencePattern || "daily");
+      setStartDate(
+        taskToEdit.startDate ? new Date(taskToEdit.startDate) : new Date()
+      );
+      setEndDate(taskToEdit.endDate ? new Date(taskToEdit.endDate) : undefined);
     }
   }, [taskToEdit]);
 
+  const showStartPicker = () => {
+    setShowStartDatePicker(true);
+  };
+
+  const showEndPicker = () => {
+    setShowEndDatePicker(true);
+  };
+
   const saveTask = async () => {
+    console.log("taskToEdit: ", taskToEdit);
     if (task.trim() === "") {
       setError("Task description cannot be empty");
       setVisible(true);
       return;
     }
 
-    if (!taskToEdit) {
-      // Check if user is unregistered and limit exceeded
-      const taskCount = await getTaskCount();
-      if (taskCount >= 10) {
-        Alert.alert(
-          "Limite Atingido",
-          "Você pode adicionar apenas 10 tarefas por dia."
-        );
-        return;
-      }
-    }
+    // if (!taskToEdit) {
+    //   // Check if user is unregistered and limit exceeded
+    //   const taskCount = await getTaskCount();
+    //   if (taskCount >= 10) {
+    //     Alert.alert(
+    //       "Limite Atingido",
+    //       "Você pode adicionar apenas 10 tarefas por dia."
+    //     );
+    //     return;
+    //   }
+    // }
 
     const tempUserId = await AsyncStorage.getItem("tempUserId");
     const timestamp = new Date().toISOString();
 
     const taskPayload: Task = {
+      userId: taskToEdit?.userId || "",
       text: task,
       completed: taskToEdit?.completed || false,
-      createdAt: taskToEdit?.createdAt || timestamp,
-      updatedAt: timestamp,
+      createdAt: taskToEdit?.createdAt
+        ? new Date(taskToEdit.createdAt._seconds * 1000) // Converter de timestamp para Date
+        : new Date(), // Se for uma nova tarefa
+      updatedAt: new Date().toISOString(), // Nova data de atualização como string ISO
       tempUserId: tempUserId ?? "",
+      isRecurring: isRecurring,
+      recurrencePattern: isRecurring ? recurrencePattern : undefined,
+      startDate: isRecurring ? startDate.toISOString() : undefined,
+      endDate: isRecurring ? calculatedEndDate.toISOString() : undefined,
     };
-
+    (Object.keys(taskPayload) as (keyof Task)[]).forEach(
+      (key) => taskPayload[key] === undefined && delete taskPayload[key]
+    );
+    console.log("taskPayload: ", taskPayload);
     try {
       let response;
       if (taskToEdit) {
@@ -94,22 +146,40 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
       }
 
       if (response.ok) {
-        console.log("response: ", response);
-        const data = await response.json();
+        const contentType = response.headers.get("content-type");
+
+        let data;
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+          // Resposta é JSON
+          data = await response.json();
+        } else {
+          // Resposta é texto
+          data = await response.text();
+        }
+
+        console.log("response: ", data);
 
         if (!tempUserId && data.tempUserId) {
           await AsyncStorage.setItem("tempUserId", data.tempUserId);
         }
 
         await incrementTaskCount();
-        navigation.navigate("Home", { taskUpdated: true }); // Sinalizando que uma tarefa foi atualizada
+        navigation.navigate("Home", { taskUpdated: true });
       } else {
         const errorMessage = await response.text();
         console.error("Erro ao salvar tarefa 1: ", errorMessage);
       }
     } catch (error) {
-      console.error("Erro ao salvar tarefa 3: ", error);
-    }
+      // Verifica se o erro tem uma mensagem, código ou um stack trace
+      if (error instanceof Error) {
+        console.error("Erro ao salvar tarefa 3: ");
+        console.error("Mensagem do erro:", error.message);
+        console.error("Stack trace:", error.stack);
+      } else {
+        // Caso o erro seja de outro tipo (por exemplo, um objeto ou string)
+        console.error("Erro inesperado ao salvar tarefa 3:", error);
+      }
+    }    
   };
 
   const deleteTask = async () => {
@@ -177,6 +247,66 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
           onChangeText={setTask}
           theme={{ colors: { primary: "#FF6F61" } }}
         />
+        {/* Recurring Task Checkbox */}
+        <View style={styles.checkboxContainer}>
+          <Checkbox
+            status={isRecurring ? "checked" : "unchecked"}
+            onPress={() => setIsRecurring(!isRecurring)}
+          />
+          <Text>Recurring Task</Text>
+        </View>
+        {/* Recurrence Pattern Dropdown */}
+        {isRecurring && (
+          <Menu
+            visible={menuVisible}
+            onDismiss={() => setMenuVisible(false)}
+            anchor={
+              <Button onPress={() => {}}>Repeat: {recurrencePattern}</Button>
+            }
+          >
+            {recurrenceOptions.map((option) => (
+              <Menu.Item
+                key={option.value}
+                onPress={() => setRecurrencePattern(option.value)}
+                title={option.label}
+              />
+            ))}
+          </Menu>
+        )}
+        {/* Start Date Picker */}
+        <Button onPress={showStartPicker}>
+          Start Date: {startDate.toDateString()}
+        </Button>
+        {showStartDatePicker && (
+          <DateTimePicker
+            mode="date"
+            value={startDate}
+            onChange={(event: any, selectedDate: any) => {
+              setShowStartDatePicker(false);
+              setStartDate(selectedDate || new Date());
+            }}
+          />
+        )}
+
+        {/* End Date Picker */}
+        {isRecurring && (
+          <>
+            <Button onPress={showEndPicker}>
+              End Date: {endDate ? endDate.toDateString() : "Not Set"}
+            </Button>
+            {showEndDatePicker && (
+              <DateTimePicker
+                mode="date"
+                value={endDate || new Date()}
+                onChange={(event: any, selectedDate: any) => {
+                  setShowEndDatePicker(false);
+                  setEndDate(selectedDate || undefined);
+                }}
+              />
+            )}
+          </>
+        )}
+
         <Button
           mode="contained"
           onPress={saveTask}
@@ -218,7 +348,7 @@ const styles = StyleSheet.create({
   },
   title: {
     marginBottom: 20,
-    color: "#FF6F61", 
+    color: "#FF6F61",
     fontSize: 24,
     fontWeight: "bold",
   },
@@ -242,17 +372,22 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 20,
   },
   iconAnimation: {
     width: 48,
     height: 48,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 20,
-  }
+  },
+  checkboxContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+  },
 });
 
 export default TaskScreen;

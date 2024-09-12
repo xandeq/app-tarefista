@@ -11,6 +11,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 import "react-native-reanimated";
 import Toast from "react-native-toast-message";
 import { AuthProvider, useAuth } from "./context/AuthContext"; // Import the AuthProvider and useAuth hook
+import { PaperProvider } from "react-native-paper";
 
 type RootStackParamList = {
   Home: undefined;
@@ -108,7 +109,9 @@ const App: React.FC = () => {
   return (
     <AuthProvider>
       <NavigationContainer>
-        <AppNavigator />
+        <PaperProvider>
+          <AppNavigator />
+        </PaperProvider>
         <Toast />
       </NavigationContainer>
     </AuthProvider>

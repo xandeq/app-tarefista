@@ -1,9 +1,14 @@
 export interface Task {
-  id?: string; // Opcional para novas tarefas
+  id?: string;
   text: string;
   completed: boolean;
-  createdAt: string;
+  createdAt: any;
   updatedAt: string;
-  tempUserId: string; // Opcional para usuários temporários
+  userId?: string;
+  tempUserId?: string;
   completionDate?: string;
+  isRecurring: boolean;   // New property to flag if the task is recurring
+  recurrencePattern?: string; // Recurrence pattern: "daily", "weekly", "monthly", etc.
+  startDate?: string;     // When the recurrence starts
+  endDate?: string;       // When the recurrence ends
 }
