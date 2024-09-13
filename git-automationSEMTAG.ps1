@@ -135,4 +135,4 @@ Check-LastCommand
 git push origin main
 Check-LastCommand
 
-Write-Host "=== Automação completa para a versão $version ===" -ForegroundColor Green
+Write-Host "=== Automação completa para a branch $featureBranch ===" -ForegroundColor Green

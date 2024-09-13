@@ -75,7 +75,6 @@ const TaskItem: React.FC<TaskItemProps> = ({
           body: JSON.stringify({
             text: task.text, // Ensure text is passed correctly
             completed: !task.completed,
-            createdAt: task.createdAt,
             updatedAt: new Date().toISOString(),
           }),
         }
