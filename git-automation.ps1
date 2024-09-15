@@ -79,17 +79,16 @@ if (-not (CheckBranchExistsLocal $featureBranch)) {
     if (CheckBranchExistsRemote $featureBranch) {
         Write-Host "Branch $featureBranch já existe remotamente. Trazendo para local." -ForegroundColor Yellow
         git fetch origin $featureBranch
-        if ($LASTEXITCODE -eq 0) {
-            git checkout $featureBranch
-            Check-LastCommand
-        }
-        else {
-            Write-Host "Erro ao fazer fetch da branch remota. Continuando o script." -ForegroundColor Yellow
-        }
+        Check-LastCommand
+        git checkout $featureBranch
+        Check-LastCommand
     }
     else {
         Write-Host "Criando a branch $featureBranch" -ForegroundColor Yellow
         git checkout -b $featureBranch
+        Check-LastCommand
+        # Push da nova branch para o repositório remoto
+        git push origin $featureBranch
         Check-LastCommand
     }
 }
@@ -99,9 +98,10 @@ else {
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Erro ao alternar para a branch $featureBranch. Tentando criar a branch localmente." -ForegroundColor Yellow
         git checkout -b $featureBranch
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host "Erro ao alternar ou criar a branch $featureBranch. Continuando o script mesmo assim." -ForegroundColor Yellow
-        }
+        Check-LastCommand
+        # Push da nova branch para o repositório remoto
+        git push origin $featureBranch
+        Check-LastCommand
     }
 }
 

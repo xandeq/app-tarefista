@@ -1,7 +1,7 @@
 param(
     [string]$featureBranch, # Nome da nova feature branch
     [string]$commitMessage, # Mensagem do commit
-    [string]$version = ""        # Versão da aplicação
+    [string]$version = ""   # Versão da aplicação (opcional)
 )
 
 # Função para verificar o último comando
@@ -79,13 +79,9 @@ if (-not (CheckBranchExistsLocal $featureBranch)) {
     if (CheckBranchExistsRemote $featureBranch) {
         Write-Host "Branch $featureBranch já existe remotamente. Trazendo para local." -ForegroundColor Yellow
         git fetch origin $featureBranch
-        if ($LASTEXITCODE -eq 0) {
-            git checkout $featureBranch
-            Check-LastCommand
-        }
-        else {
-            Write-Host "Erro ao fazer fetch da branch remota. Continuando o script." -ForegroundColor Yellow
-        }
+        Check-LastCommand
+        git checkout $featureBranch
+        Check-LastCommand
     }
     else {
         Write-Host "Criando a branch $featureBranch" -ForegroundColor Yellow
@@ -114,18 +110,12 @@ Check-LastCommand
 
 # Tenta fazer o merge da feature branch com a develop
 git merge $featureBranch
+Check-LastCommand
 
-# Verifica o resultado do merge
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Não foi possível fazer merge da feature branch $featureBranch com a develop. Continuando o script." -ForegroundColor Yellow
-}
-else {
-    Write-Host "Merge da feature branch com a develop concluído com sucesso." -ForegroundColor Green
-}
-
+Write-Host "Merge da feature branch com a develop concluído com sucesso." -ForegroundColor Green
 
 # 5. Fazer o merge da develop na main
-Write-Host "6. Fazendo merge da develop com a main" -ForegroundColor Yellow
+Write-Host "5. Fazendo merge da develop com a main" -ForegroundColor Yellow
 git checkout main
 Check-LastCommand
 

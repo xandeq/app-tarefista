@@ -1,20 +1,6 @@
 import React, { useEffect, useState } from "react";
-import {
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-  View,
-} from "react-native";
-import {
-  Text,
-  TextInput,
-  Button,
-  Appbar,
-  Snackbar,
-  Checkbox,
-  Menu,
-} from "react-native-paper";
+import { StyleSheet, KeyboardAvoidingView, Platform, Alert, View } from "react-native";
+import { Text, TextInput, Button, Appbar, Snackbar, Checkbox, Menu } from "react-native-paper";
 import Animated, { SlideInUp } from "react-native-reanimated";
 import Icon from "react-native-vector-icons/Ionicons";
 import { getTaskCount, incrementTaskCount } from "../utils/taskTracker";
@@ -51,9 +37,7 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
   const [menuVisible, setMenuVisible] = useState(false);
   const taskToEdit: Task = route.params?.task;
 
-  const calculatedEndDate = endDate
-    ? endDate
-    : new Date(new Date().setFullYear(new Date().getFullYear() + 5));
+  const calculatedEndDate = endDate ? endDate : new Date(new Date().setFullYear(new Date().getFullYear() + 5));
 
   useEffect(() => {
     if (taskToEdit) {
@@ -62,9 +46,7 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
       setRecurrencePattern(taskToEdit.recurrencePattern || "daily");
       if (taskToEdit.startDate) {
         const parsedStartDate = new Date(taskToEdit.startDate);
-        setStartDate(
-          isNaN(parsedStartDate.getTime()) ? new Date() : parsedStartDate
-        );
+        setStartDate(isNaN(parsedStartDate.getTime()) ? new Date() : parsedStartDate);
       } else {
         setStartDate(new Date());
       }
@@ -111,48 +93,41 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
     const timestamp = new Date().toISOString();
 
     const taskPayload: Task = {
-      userId: taskToEdit?.userId || "",
-      text: task,
-      completed: taskToEdit?.completed || false,
-      createdAt: taskToEdit?.createdAt ?? timestamp,
-      updatedAt: timestamp,
-      tempUserId: tempUserId ?? "",
-      isRecurring: isRecurring,
-      recurrencePattern: isRecurring ? recurrencePattern : undefined,
-      startDate: isRecurring ? startDate.toISOString() : undefined,
-      endDate: isRecurring ? calculatedEndDate.toISOString() : undefined,
+      userId: taskToEdit?.userId || "", // Se não houver userId, atribui string vazia
+      text: task || "", // Se não houver texto, atribui string vazia
+      completed: taskToEdit?.completed || false, // Se não houver informação, assume false
+      createdAt: taskToEdit?.createdAt ?? timestamp, // Mantém o createdAt ou usa o timestamp atual
+      updatedAt: timestamp, // Atualiza com o timestamp atual
+      tempUserId: tempUserId ?? "", // Se não houver tempUserId, atribui string vazia
+      isRecurring: taskToEdit ? taskToEdit.isRecurring : true, // Se taskToEdit existe, usa o valor, senão define como true ao criar
+      recurrencePattern: taskToEdit?.isRecurring ? recurrencePattern : undefined, // Verifica se é recorrente, caso contrário é undefined
+      startDate: taskToEdit?.isRecurring ? startDate.toISOString() : undefined, // Verifica se é recorrente e formata a data
+      endDate: taskToEdit?.isRecurring ? calculatedEndDate.toISOString() : undefined, // Verifica se é recorrente e formata a data
     };
-    (Object.keys(taskPayload) as (keyof Task)[]).forEach(
-      (key) => taskPayload[key] === undefined && delete taskPayload[key]
-    );
+
+    (Object.keys(taskPayload) as (keyof Task)[]).forEach((key) => taskPayload[key] === undefined && delete taskPayload[key]);
     console.log("taskPayload: ", taskPayload);
     try {
       let response;
       if (taskToEdit) {
         // Edit existing task
-        response = await fetch(
-          `https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks/${taskToEdit.id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(taskPayload),
-          }
-        );
+        response = await fetch(`https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks/${taskToEdit.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(taskPayload),
+        });
       } else {
         console.log("taskPayload: ", taskPayload);
         // Add new task
-        response = await fetch(
-          "https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(taskPayload),
-          }
-        );
+        response = await fetch("https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(taskPayload),
+        });
       }
 
       if (response.ok) {
@@ -194,12 +169,9 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
 
   const deleteTask = async () => {
     try {
-      const response = await fetch(
-        `https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks/${taskToEdit.id}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const response = await fetch(`https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks/${taskToEdit.id}`, {
+        method: "DELETE",
+      });
       if (response.ok) {
         if (typeof route.params?.refreshTasks === "function") {
           route.params.refreshTasks();
@@ -221,18 +193,15 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
         { text: "Cancelar", style: "cancel" },
         { text: "Deletar", style: "destructive", onPress: deleteTask },
       ],
-      { cancelable: true }
+      { cancelable: true },
     );
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
-    >
+    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.container}>
       <Appbar.Header>
         <Appbar.Action
-          icon="close"
+          icon='close'
           onPress={() => {
             if (navigation.canGoBack()) {
               navigation.goBack();
@@ -242,64 +211,35 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
           }}
         />
 
-        {taskToEdit && (
-          <Appbar.Action icon="trash-can" onPress={confirmDelete} color="red" />
-        )}
+        {taskToEdit && <Appbar.Action icon='trash-can' onPress={confirmDelete} color='red' />}
       </Appbar.Header>
 
       <Animated.View entering={SlideInUp} style={styles.content}>
         <View style={styles.titleContainer}>
-          <LottieView
-            source={require("../assets/cleaning.json")}
-            autoPlay
-            loop
-            style={styles.iconAnimation}
-          />
-          <Text variant="headlineLarge" style={styles.title}>
+          <LottieView source={require("../assets/cleaning.json")} autoPlay loop style={styles.iconAnimation} />
+          <Text variant='headlineLarge' style={styles.title}>
             Nova Tarefa
           </Text>
         </View>
-        <TextInput
-          mode="outlined"
-          label="Descrição da tarefa"
-          style={styles.input}
-          value={task}
-          onChangeText={setTask}
-          theme={{ colors: { primary: "#FF6F61" } }}
-        />
+        <TextInput mode='outlined' label='Descrição da tarefa' style={styles.input} value={task} onChangeText={setTask} theme={{ colors: { primary: "#FF6F61" } }} />
         {/* Recurring Task Checkbox */}
         <View style={styles.checkboxContainer}>
-          <Checkbox
-            status={isRecurring ? "checked" : "unchecked"}
-            onPress={() => setIsRecurring(!isRecurring)}
-          />
-          <Text>Recurring Task</Text>
+          <Checkbox status={isRecurring ? "checked" : "unchecked"} onPress={() => setIsRecurring(!isRecurring)} />
+          <Text>Recorrente ?</Text>
         </View>
         {/* Recurrence Pattern Dropdown */}
         {isRecurring && (
-          <Menu
-            visible={menuVisible}
-            onDismiss={() => setMenuVisible(false)}
-            anchor={
-              <Button onPress={() => {}}>Repeat: {recurrencePattern}</Button>
-            }
-          >
+          <Menu visible={menuVisible} onDismiss={() => setMenuVisible(false)} anchor={<Button onPress={() => {}}>Repeat: {recurrencePattern}</Button>}>
             {recurrenceOptions.map((option) => (
-              <Menu.Item
-                key={option.value}
-                onPress={() => setRecurrencePattern(option.value)}
-                title={option.label}
-              />
+              <Menu.Item key={option.value} onPress={() => setRecurrencePattern(option.value)} title={option.label} />
             ))}
           </Menu>
         )}
         {/* Start Date Picker */}
-        <Button onPress={showStartPicker}>
-          Start Date: {startDate.toDateString()}
-        </Button>
+        <Button onPress={showStartPicker}>Inicio: {startDate.toDateString()}</Button>
         {showStartDatePicker && (
           <DateTimePicker
-            mode="date"
+            mode='date'
             value={startDate || new Date()} // Garantir que sempre passe uma data válida
             onChange={(event: any, selectedDate: any) => {
               setShowStartDatePicker(false);
@@ -311,12 +251,10 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
         {/* End Date Picker */}
         {isRecurring && (
           <>
-            <Button onPress={showEndPicker}>
-              End Date: {endDate ? endDate.toDateString() : "Not Set"}
-            </Button>
+            <Button onPress={showEndPicker}>Fim: {endDate ? endDate.toDateString() : "Not Set"}</Button>
             {showEndDatePicker && (
               <DateTimePicker
-                mode="date"
+                mode='date'
                 value={endDate || new Date()} // Garantir que sempre passe uma data válida
                 onChange={(event: any, selectedDate: any) => {
                   setShowEndDatePicker(false);
@@ -327,28 +265,11 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
           </>
         )}
 
-        <Button
-          mode="contained"
-          onPress={saveTask}
-          style={styles.button}
-          icon={() => (
-            <Icon
-              name={taskToEdit ? "save" : "add-circle-outline"}
-              size={24}
-              color="#fff"
-            />
-          )}
-          buttonColor="#FF6F61"
-        >
+        <Button mode='contained' onPress={saveTask} style={styles.button} icon={() => <Icon name={taskToEdit ? "save" : "add-circle-outline"} size={24} color='#fff' />} buttonColor='#FF6F61'>
           {taskToEdit ? "Salvar" : "Adicionar"}
         </Button>
       </Animated.View>
-      <Snackbar
-        visible={visible}
-        onDismiss={() => setVisible(false)}
-        duration={3000}
-        style={styles.snackbar}
-      >
+      <Snackbar visible={visible} onDismiss={() => setVisible(false)} duration={3000} style={styles.snackbar}>
         {error}
       </Snackbar>
     </KeyboardAvoidingView>
