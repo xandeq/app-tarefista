@@ -77,33 +77,22 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
       return;
     }
 
-    // if (!taskToEdit) {
-    //   // Check if user is unregistered and limit exceeded
-    //   const taskCount = await getTaskCount();
-    //   if (taskCount >= 10) {
-    //     Alert.alert(
-    //       "Limite Atingido",
-    //       "Você pode adicionar apenas 10 tarefas por dia."
-    //     );
-    //     return;
-    //   }
-    // }
-
     const tempUserId = await AsyncStorage.getItem("tempUserId");
     const timestamp = new Date().toISOString();
 
     const taskPayload: Task = {
-      userId: taskToEdit?.userId || "", // Se não houver userId, atribui string vazia
-      text: task || "", // Se não houver texto, atribui string vazia
-      completed: taskToEdit?.completed || false, // Se não houver informação, assume false
-      createdAt: taskToEdit?.createdAt ?? timestamp, // Mantém o createdAt ou usa o timestamp atual
-      updatedAt: timestamp, // Atualiza com o timestamp atual
-      tempUserId: tempUserId ?? "", // Se não houver tempUserId, atribui string vazia
-      isRecurring: taskToEdit ? taskToEdit.isRecurring : true, // Se taskToEdit existe, usa o valor, senão define como true ao criar
-      recurrencePattern: taskToEdit?.isRecurring ? recurrencePattern : undefined, // Verifica se é recorrente, caso contrário é undefined
-      startDate: taskToEdit?.isRecurring ? startDate.toISOString() : undefined, // Verifica se é recorrente e formata a data
-      endDate: taskToEdit?.isRecurring ? calculatedEndDate.toISOString() : undefined, // Verifica se é recorrente e formata a data
+      userId: taskToEdit?.userId || "",
+      text: task || "",
+      completed: taskToEdit?.completed || false,
+      createdAt: taskToEdit?.createdAt ?? new Date().toISOString(), // Substitui null por uma data atual
+      updatedAt: new Date().toISOString(),
+      tempUserId: tempUserId ?? "",
+      isRecurring: isRecurring,
+      recurrencePattern: isRecurring ? recurrencePattern : "",
+      startDate: isRecurring ? (startDate ? startDate.toISOString() : "") : "", // Substitui null por string vazia
+      endDate: isRecurring ? (endDate ? endDate.toISOString() : "") : "", // Substitui null por string vazia
     };
+    
 
     (Object.keys(taskPayload) as (keyof Task)[]).forEach((key) => taskPayload[key] === undefined && delete taskPayload[key]);
     console.log("taskPayload: ", taskPayload);

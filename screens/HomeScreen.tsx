@@ -1,20 +1,8 @@
 import React, { useState, useEffect } from "react";
-import {
-  StyleSheet,
-  View,
-  FlatList,
-  ActivityIndicator,
-  TouchableOpacity,
-  Text,
-  Alert,
-} from "react-native";
+import { StyleSheet, View, FlatList, ActivityIndicator, TouchableOpacity, Text, Alert } from "react-native";
 import TaskItem from "./TaskItem";
 import Icon from "react-native-vector-icons/Ionicons";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-} from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import LottieView from "lottie-react-native";
@@ -51,15 +39,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
 
       console.log("Token fetchTasks:", token);
 
-      const response = await axios.get(
-        "https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks",
-        {
-          // headers: {
-          //   Authorization: `Bearer ${token}`,
-          // },
-          params: { tempUserId: userId }, // Pass the userId or tempUserId here
-        }
-      );
+      const response = await axios.get("https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks", {
+        // headers: {
+        //   Authorization: `Bearer ${token}`,
+        // },
+        params: { tempUserId: userId }, // Pass the userId or tempUserId here
+      });
 
       if (response.data) {
         console.log("Tasks fetched:", response.data);
@@ -76,9 +61,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
 
   const fetchQuote = async () => {
     try {
-      const response = await axios.get(
-        "https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/phrases"
-      );
+      const response = await axios.get("https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/phrases");
       const { phrase } = response.data; // A API retorna um objeto com a chave 'phrase'
       return phrase;
     } catch (error) {
@@ -117,15 +100,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
       console.log("Token fetchUserId:", token);
 
       // Faça a chamada à API para obter o userId
-      const response = await fetch(
-        "https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/userId",
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch("https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/userId", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (response.ok) {
         const data = await response.json();
@@ -248,12 +228,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
 
   const deleteTaskById = async (taskId: string) => {
     try {
-      const response = await fetch(
-        `https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks/${taskId}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const response = await fetch(`https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks/${taskId}`, {
+        method: "DELETE",
+      });
       if (!response.ok) {
         console.error("Erro ao deletar tarefa:", await response.text());
       }
@@ -282,7 +259,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
             },
           },
         ],
-        { cancelable: true }
+        { cancelable: true },
       );
     } catch (error) {
       console.error("Erro ao deletar todas as tarefas:", error);
@@ -290,23 +267,40 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
   };
 
   const filterTasksByDate = (tasks: Task[], selectedDate: Date): Task[] => {
-    return tasks.filter((task) => {
-      const taskStartDate = task.startDate
-        ? new Date(task.startDate)
-        : new Date();
-      const taskEndDate = task.endDate ? new Date(task.endDate) : null;
+    return tasks.filter((task: any) => {
+      const taskStartDate = task.startDate ? new Date(task.startDate._seconds * 1000) : null;
+      const taskEndDate = task.endDate ? new Date(task.endDate._seconds * 1000) : null;
+      const taskCreatedAt = task.createdAt ? new Date(task.createdAt._seconds * 1000) : null;
 
-      // Verificar se a tarefa é recorrente ou tem data específica de execução
+      // Converte a data selecionada para uma string no formato "YYYY-MM-DD"
+      const selectedDateStr = moment(selectedDate).format("YYYY-MM-DD");
+
+      // Verifica se a tarefa é recorrente
       if (task.isRecurring) {
-        return (
-          taskStartDate <= selectedDate &&
-          (!taskEndDate || taskEndDate >= selectedDate)
-        );
+        if (task.recurrencePattern === "daily") {
+          // Para recorrências diárias, exibir a partir da startDate (se existir) até endDate (se existir)
+          if (taskStartDate) {
+            const taskStartDateStr = moment(taskStartDate).format("YYYY-MM-DD");
+            return taskStartDateStr <= selectedDateStr && (!taskEndDate || moment(selectedDate).isSameOrBefore(taskEndDate));
+          }
+          return true; // Se não houver startDate, considera a tarefa sempre válida
+        }
+        // Adicione outras lógicas de recorrência (semanal, mensal, etc.) aqui, se necessário
       } else {
-        return taskStartDate.toDateString() === selectedDate.toDateString();
+        // Se não for recorrente, verifica se a createdAt corresponde à data selecionada
+        if (taskCreatedAt) {
+          const taskCreatedAtStr = moment(taskCreatedAt).format("YYYY-MM-DD");
+          return taskCreatedAtStr === selectedDateStr;
+        }
+        return false; // Não exibe a tarefa se createdAt for null ou não corresponder à data selecionada
       }
     });
   };
+
+  // useEffect para atualizar as tarefas filtradas quando selectedDate ou tasks mudarem
+  useEffect(() => {
+    setFilteredTasks(filterTasksByDate(tasks, selectedDate));
+  }, [selectedDate, tasks]);
 
   return (
     <View style={styles.container}>
@@ -316,49 +310,50 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
       <View style={styles.header}>
         <Text style={styles.title}>Tarefas</Text>
         <TouchableOpacity onPress={deleteAllTasks}>
-          <Icon name="trash-bin" size={30} color="#FF6347" />
+          <Icon name='trash-bin' size={30} color='#FF6347' />
         </TouchableOpacity>
       </View>
+
       <View style={styles.daysContainer}>
         {renderDays().map((day: any, index: any) => (
-          <View
+          <TouchableOpacity
             key={index}
-            style={[
-              styles.dayItem,
-              day.isToday && styles.currentDay, // Aplica o estilo se for o dia atual
-            ]}
+            onPress={() => setSelectedDate(day.fullDate)} // Atualiza a data selecionada
           >
-            <Text
+            <View
               style={[
-                styles.dayNumber,
-                day.isToday && styles.currentDayText, // Aplica o estilo do texto se for o dia atual
+                styles.dayItem,
+                day.fullDate.toDateString() === selectedDate.toDateString() && styles.currentDay, // Aplica o estilo se for a data selecionada
               ]}
             >
-              {day.dayNumber}
-            </Text>
-            <Text
-              style={[
-                styles.dayName,
-                day.isToday && styles.currentDayText, // Aplica o estilo do texto se for o dia atual
-              ]}
-            >
-              {day.dayName}
-            </Text>
-          </View>
+              <Text
+                style={[
+                  styles.dayNumber,
+                  day.fullDate.toDateString() === selectedDate.toDateString() && styles.currentDayText, // Aplica o estilo do texto se for a data selecionada
+                ]}
+              >
+                {day.dayNumber}
+              </Text>
+              <Text
+                style={[
+                  styles.dayName,
+                  day.fullDate.toDateString() === selectedDate.toDateString() && styles.currentDayText, // Aplica o estilo do texto se for a data selecionada
+                ]}
+              >
+                {day.dayName}
+              </Text>
+            </View>
+          </TouchableOpacity>
         ))}
       </View>
 
       <Animated.View style={[styles.addButton, animatedStyle]}>
-        <TouchableOpacity
-          onPressIn={handlePressIn}
-          onPressOut={handlePressOut}
-          onPress={() => navigation.navigate("Tasks", { taskId: null })}
-        >
-          <Icon name="add-circle" size={56} color="#FFFFFF" />
+        <TouchableOpacity onPressIn={handlePressIn} onPressOut={handlePressOut} onPress={() => navigation.navigate("Tasks", { taskId: null })}>
+          <Icon name='add-circle' size={56} color='#FFFFFF' />
         </TouchableOpacity>
       </Animated.View>
       {loading ? (
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size='large' color='#0000ff' />
       ) : tasks.length === 0 ? (
         <View style={styles.emptyContainer}>
           <LottieView
@@ -368,24 +363,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
             style={styles.animation}
           />
           <Text style={styles.emptyMessage}>Nenhuma tarefa encontrada!</Text>
-          <Text style={styles.subMessage}>
-            Adicione novas tarefas para vê-las aqui.
-          </Text>
+          <Text style={styles.subMessage}>Adicione novas tarefas para vê-las aqui.</Text>
         </View>
       ) : (
-        <FlatList
-          data={tasks}
-          style={styles.flatList}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TaskItem
-              task={item}
-              onEdit={handleEditTask}
-              onRemove={handleRemoveTask}
-              refreshTasks={() => fetchTasks(userId!)}
-            />
-          )}
-        />
+        <FlatList data={tasks} style={styles.flatList} keyExtractor={(item) => item.id} renderItem={({ item }) => <TaskItem task={item} onEdit={handleEditTask} onRemove={handleRemoveTask} refreshTasks={() => fetchTasks(userId!)} />} />
       )}
     </View>
   );
