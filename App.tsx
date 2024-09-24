@@ -12,6 +12,7 @@ import "react-native-reanimated";
 import Toast from "react-native-toast-message";
 import { AuthProvider, useAuth } from "./context/AuthContext"; // Import the AuthProvider and useAuth hook
 import { PaperProvider } from "react-native-paper";
+import GoalsScreen from "./screens/GoalsScreen";
 
 type RootStackParamList = {
   Home: undefined;
@@ -45,6 +46,9 @@ function MainTabs() {
             case "ProfileTab":
               iconName = "person";
               break;
+            case "GoalsTab": // Ícone para a aba de metas
+              iconName = "flag";
+              break;
             case "Login":
               iconName = "log-in";
               break;
@@ -63,24 +67,17 @@ function MainTabs() {
       {user ? (
         <>
           {/* Abas para usuários logados */}
-          <Tab.Screen
-            name="HomeTab"
-            component={HomeScreen}
-            options={{ headerTitle: "Hoje" }}
-          />
-          <Tab.Screen name="TasksTab" component={TaskScreen} />
-          <Tab.Screen name="ProfileTab" component={ProfileScreen} />
+          <Tab.Screen name='HomeTab' component={HomeScreen} options={{ headerTitle: "Hoje" }} />
+          <Tab.Screen name='TasksTab' component={TaskScreen} />
+          <Tab.Screen name='ProfileTab' component={ProfileScreen} />
+          <Tab.Screen name="GoalsTab" component={GoalsScreen} options={{ headerTitle: "Metas" }} />
         </>
       ) : (
         <>
-          <Tab.Screen
-            name="HomeTab"
-            component={HomeScreen}
-            options={{ headerTitle: "Hoje" }}
-          />
-          <Tab.Screen name="Login" component={LoginScreen} />
-          <Tab.Screen name="Register" component={RegisterScreen} />
-          {user && <Tab.Screen name="ProfileTab" component={ProfileScreen} />}
+          <Tab.Screen name='HomeTab' component={HomeScreen} options={{ headerTitle: "Hoje" }} />
+          <Tab.Screen name='Login' component={LoginScreen} />
+          <Tab.Screen name='Register' component={RegisterScreen} />
+          {user && <Tab.Screen name='ProfileTab' component={ProfileScreen} />}
         </>
       )}
     </Tab.Navigator>
@@ -90,17 +87,13 @@ function MainTabs() {
 function AppNavigator() {
   return (
     <Stack.Navigator
-      initialRouteName="Home" // Always start with Home screen
+      initialRouteName='Home' // Always start with Home screen
       screenOptions={{ headerTitleAlign: "center" }}
     >
-      <Stack.Screen
-        name="Home"
-        component={MainTabs}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="Register" component={RegisterScreen} />
-      <Stack.Screen name="Tasks" component={TaskScreen} />
+      <Stack.Screen name='Home' component={MainTabs} options={{ headerShown: false }} />
+      <Stack.Screen name='Login' component={LoginScreen} />
+      <Stack.Screen name='Register' component={RegisterScreen} />
+      <Stack.Screen name='Tasks' component={TaskScreen} />
     </Stack.Navigator>
   );
 }

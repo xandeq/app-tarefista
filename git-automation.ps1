@@ -1,6 +1,6 @@
 param(
-    [string]$featureBranch, # Nome da nova feature branch
-    [string]$commitMessage, # Mensagem do commit
+    [string]$featureBranch = "feature/geral", # Nome da nova feature branch
+    [string]$commitMessage = "Novo commit", # Mensagem do commit
     [string]$version         # Versão da aplicação
 )
 
