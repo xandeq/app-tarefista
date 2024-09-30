@@ -6,15 +6,13 @@ import { RootStackParamList } from "../types";
 import Toast from "react-native-toast-message";
 import { StackNavigationProp } from "@react-navigation/stack";
 
-type RegisterScreenNavigationProp = StackNavigationProp<
-  RootStackParamList,
-  "Register"
->;
+type RegisterScreenNavigationProp = StackNavigationProp<RootStackParamList, "Register">;
 
 const RegisterScreen: React.FC = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [displayName, setDisplayName] = useState<string>("");
+  const [photoURL, setPhotoURL] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [visible, setVisible] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -32,17 +30,15 @@ const RegisterScreen: React.FC = () => {
       return;
     }
     setLoading(true);
+    setPhotoURL("https://via.placeholder.com/150");
     try {
-      const response = await fetch(
-        `https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/register`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email, password, displayName }),
-        }
-      );
+      const response = await fetch(`https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password, displayName, photoURL }),
+      });
       if (response.ok) {
         const data = await response.json();
         const userId = data.userId;
@@ -78,55 +74,17 @@ const RegisterScreen: React.FC = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
-    >
+    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.title}>Register</Text>
-        <TextInput
-          mode="outlined"
-          label="Display Name"
-          style={styles.input}
-          value={displayName}
-          onChangeText={setDisplayName}
-          theme={{ colors: { primary: "#FF6F61" } }}
-        />
-        <TextInput
-          mode="outlined"
-          label="Email"
-          style={styles.input}
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          theme={{ colors: { primary: "#FF6F61" } }}
-        />
-        <TextInput
-          mode="outlined"
-          label="Password"
-          style={styles.input}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          theme={{ colors: { primary: "#FF6F61" } }}
-        />
-        <Button
-          mode="contained"
-          onPress={registerUser}
-          loading={loading}
-          disabled={loading}
-          style={styles.button}
-          buttonColor="#FF6F61"
-        >
+        <TextInput mode='outlined' label='Display Name' style={styles.input} value={displayName} onChangeText={setDisplayName} theme={{ colors: { primary: "#FF6F61" } }} />
+        <TextInput mode='outlined' label='Email' style={styles.input} value={email} onChangeText={setEmail} keyboardType='email-address' autoCapitalize='none' theme={{ colors: { primary: "#FF6F61" } }} />
+        <TextInput mode='outlined' label='Password' style={styles.input} value={password} onChangeText={setPassword} secureTextEntry theme={{ colors: { primary: "#FF6F61" } }} />
+        <TextInput style={styles.input} placeholder='URL da Foto de Perfil (Opcional)' value={photoURL} onChangeText={setPhotoURL} />
+        <Button mode='contained' onPress={registerUser} loading={loading} disabled={loading} style={styles.button} buttonColor='#FF6F61'>
           Register
         </Button>
-        <Snackbar
-          visible={visible}
-          onDismiss={() => setVisible(false)}
-          duration={3000}
-          style={styles.snackbar}
-        >
+        <Snackbar visible={visible} onDismiss={() => setVisible(false)} duration={3000} style={styles.snackbar}>
           {error}
         </Snackbar>
       </View>
@@ -170,4 +128,3 @@ export default RegisterScreen;
 function syncTasksAfterRegistration(userId: any) {
   throw new Error("Function not implemented.");
 }
-

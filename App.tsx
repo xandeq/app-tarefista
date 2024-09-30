@@ -17,7 +17,7 @@ import GoalsScreen from "./screens/GoalsScreen";
 type RootStackParamList = {
   Home: undefined;
   Login: undefined;
-  Register: undefined;
+  Cadastrar: undefined;
   Tasks: { taskId: string } | undefined;
   Profile: undefined;
 };
@@ -37,22 +37,22 @@ function MainTabs() {
           let iconName: string;
 
           switch (route.name) {
-            case "HomeTab":
+            case "Inicio":
               iconName = "home";
               break;
-            case "TasksTab":
+            case "Tarefas":
               iconName = "clipboard";
               break;
-            case "ProfileTab":
+            case "Perfil":
               iconName = "person";
               break;
-            case "GoalsTab": // Ícone para a aba de metas
+            case "Metas": // Ícone para a aba de metas
               iconName = "flag";
               break;
             case "Login":
               iconName = "log-in";
               break;
-            case "Register":
+            case "Cadastrar":
               iconName = "person-add";
               break;
             default:
@@ -67,17 +67,18 @@ function MainTabs() {
       {user ? (
         <>
           {/* Abas para usuários logados */}
-          <Tab.Screen name='HomeTab' component={HomeScreen} options={{ headerTitle: "Hoje" }} />
-          <Tab.Screen name='TasksTab' component={TaskScreen} />
-          <Tab.Screen name='ProfileTab' component={ProfileScreen} />
-          <Tab.Screen name="GoalsTab" component={GoalsScreen} options={{ headerTitle: "Metas" }} />
+          <Tab.Screen name='Inicio' component={HomeScreen} options={{ headerTitle: "Hoje" }} />
+          <Tab.Screen name='Tarefas' component={TaskScreen} />
+          <Tab.Screen name='Perfil' component={ProfileScreen} />
+          <Tab.Screen name="Metas" component={GoalsScreen} options={{ headerTitle: "Metas" }} />
         </>
       ) : (
         <>
-          <Tab.Screen name='HomeTab' component={HomeScreen} options={{ headerTitle: "Hoje" }} />
+          <Tab.Screen name='Inicio' component={HomeScreen} options={{ headerTitle: "Hoje" }} />
+          <Tab.Screen name="Metas" component={GoalsScreen} options={{ headerTitle: "Metas" }} />
           <Tab.Screen name='Login' component={LoginScreen} />
-          <Tab.Screen name='Register' component={RegisterScreen} />
-          {user && <Tab.Screen name='ProfileTab' component={ProfileScreen} />}
+          <Tab.Screen name='Cadastrar' component={RegisterScreen} />
+          {user && <Tab.Screen name='Perfil' component={ProfileScreen} />}
         </>
       )}
     </Tab.Navigator>
@@ -92,7 +93,7 @@ function AppNavigator() {
     >
       <Stack.Screen name='Home' component={MainTabs} options={{ headerShown: false }} />
       <Stack.Screen name='Login' component={LoginScreen} />
-      <Stack.Screen name='Register' component={RegisterScreen} />
+      <Stack.Screen name='Cadastrar' component={RegisterScreen} />
       <Stack.Screen name='Tasks' component={TaskScreen} />
     </Stack.Navigator>
   );

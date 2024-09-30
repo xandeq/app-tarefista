@@ -92,7 +92,6 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
       startDate: isRecurring ? (startDate ? startDate.toISOString() : "") : "", // Substitui null por string vazia
       endDate: isRecurring ? (endDate ? endDate.toISOString() : "") : "", // Substitui null por string vazia
     };
-    
 
     (Object.keys(taskPayload) as (keyof Task)[]).forEach((key) => taskPayload[key] === undefined && delete taskPayload[key]);
     console.log("taskPayload: ", taskPayload);
@@ -195,7 +194,7 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
             if (navigation.canGoBack()) {
               navigation.goBack();
             } else {
-              navigation.navigate("HomeTab"); // Ou navegue para uma tela inicial
+              navigation.navigate("Inicio"); // Ou navegue para uma tela inicial
             }
           }}
         />

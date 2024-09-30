@@ -34,7 +34,7 @@ export default function LoginScreen({ navigation }) {
         secureTextEntry
       />
       <Button title="Login" onPress={handleLogin} />
-      <Button title="Register" onPress={() => navigation.navigate('Register')} />
+      <Button title="Cadastrar" onPress={() => navigation.navigate('Cadastrar')} />
     </View>
   );
 }
