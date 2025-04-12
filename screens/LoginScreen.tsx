@@ -48,9 +48,17 @@ const LoginScreen: React.FC = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Accept": "application/json"
         },
         body: JSON.stringify({ email, password }),
+      }).catch(error => {
+        console.error("Network error:", error);
+        throw new Error("Erro de conexão com o servidor");
       });
+
+      if (!response) {
+        throw new Error("Não foi possível conectar ao servidor");
+      }
       const responseData = await response.json();
       if (responseData.token) {
         await AsyncStorage.setItem("authToken", responseData.token);
