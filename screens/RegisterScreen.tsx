@@ -57,10 +57,14 @@ const RegisterScreen: React.FC = () => {
           const errorText = await response.text();
           const errorData = JSON.parse(errorText);
           
-          // Check different error message locations
+          // Check different error message locations, including nested error object
           errorMessage = errorData.error?.message || 
                         errorData.message || 
                         "Erro ao realizar cadastro. Por favor, tente novamente.";
+          
+          if (errorData.error?.error?.message) {
+            errorMessage = errorData.error.error.message;
+          }
           
           console.log("Registration error:", errorData);
         } catch (e) {
@@ -68,17 +72,16 @@ const RegisterScreen: React.FC = () => {
           errorMessage = "Erro ao realizar cadastro. Por favor, tente novamente.";
         }
         
-        Alert.alert(
-          "Erro no Cadastro",
-          errorMessage,
-          [
-            {
-              text: "OK",
-              style: "default",
-              onPress: () => setVisible(false)
-            }
-          ]
-        );
+        Toast.show({
+          type: "error",
+          text1: "Erro no Cadastro",
+          text2: errorMessage,
+          position: "bottom",
+          visibilityTime: 4000
+        });
+        
+        setError(errorMessage);
+        setVisible(true);
       }
     } catch (error: any) {
       Toast.show({
