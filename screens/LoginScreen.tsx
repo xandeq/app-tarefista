@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import {
   View,
@@ -5,20 +6,19 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
+  Image,
+  Dimensions,
 } from "react-native";
 import { Text, TextInput, Button, Snackbar } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import Toast from "react-native-toast-message";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useAuth } from "../context/AuthContext"; // Importar useAuth and UserType
+import { useAuth } from "../context/AuthContext";
 import { RootStackParamList } from "../types";
-import API_BASE_URL from "../config/apiConfig";
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 
-type LoginScreenNavigationProp = StackNavigationProp<
-  RootStackParamList,
-  "Login"
->;
+type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, "Login">;
 
 const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState<string>("");
@@ -26,38 +26,32 @@ const LoginScreen: React.FC = () => {
   const [error, setError] = useState<string>("");
   const [visible, setVisible] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   const navigation = useNavigation<LoginScreenNavigationProp>();
-
-  const { setUser } = useAuth() as { setUser: (user: any) => void }; // Aqui está o uso do contexto de autenticação
+  const { setUser } = useAuth() as { setUser: (user: any) => void };
 
   const loginUser = async () => {
     if (email.trim() === "" || password.trim() === "") {
       Toast.show({
         type: "error",
-        text1: "Error",
-        text2: "Email and password cannot be empty",
+        text1: "Erro",
+        text2: "Email e senha não podem estar vazios",
       });
-      setError("Email and password cannot be empty");
+      setError("Email e senha não podem estar vazios");
       setVisible(true);
       return;
     }
     setLoading(true);
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/login`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email, password }),
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
       const responseData = await response.json();
-      console.log("Response data LOGIN: ", responseData);
       if (responseData.token) {
-        console.log("Response data token: ", responseData.token);
-        console.log("Response data user: ", responseData.user);
         await AsyncStorage.setItem("authToken", responseData.token);
         await AsyncStorage.setItem("user", JSON.stringify(responseData.user));
         setUser(responseData.user);
@@ -66,19 +60,18 @@ const LoginScreen: React.FC = () => {
         setLoading(false);
         Toast.show({
           type: "success",
-          text1: "Success",
-          text2: "Logged in successfully",
+          text1: "Sucesso",
+          text2: "Login realizado com sucesso",
         });
-        console.log("User logged in successfully navigate Home");
         navigation.reset({
           index: 0,
-          routes: [{ name: "Home" }], // Reseta a pilha de navegação e vai para Home
-        }); // Navigate to the MainTabs screen
+          routes: [{ name: "Home" }],
+        });
       } else {
         const errorMessage = await response.text();
         Toast.show({
           type: "error",
-          text1: "Error",
+          text1: "Erro",
           text2: errorMessage,
         });
         setError(errorMessage);
@@ -87,18 +80,14 @@ const LoginScreen: React.FC = () => {
     } catch (error: any) {
       Toast.show({
         type: "error",
-        text1: "Error",
-        text2: "Error logging in: " + error.message,
+        text1: "Erro",
+        text2: "Erro ao fazer login: " + error.message,
       });
-      setError("Error logging in: " + error.message);
+      setError("Erro ao fazer login: " + error.message);
       setVisible(true);
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleNavigateToRegister = () => {
-    navigation.navigate("Register");
   };
 
   return (
@@ -107,36 +96,70 @@ const LoginScreen: React.FC = () => {
       style={styles.container}
     >
       <View style={styles.content}>
-        <Text style={styles.title}>Login</Text>
-        <TextInput
-          mode="outlined"
-          label="Email"
-          style={styles.input}
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          theme={{ colors: { primary: "#FF6F61" } }}
-        />
-        <TextInput
-          mode="outlined"
-          label="Password"
-          style={styles.input}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          theme={{ colors: { primary: "#FF6F61" } }}
-        />
-        <Button
-          mode="contained"
-          onPress={loginUser}
-          loading={loading}
-          disabled={loading}
-          style={styles.button}
-          buttonColor="#FF6F61"
-        >
-          Login
-        </Button>
+        <View style={styles.logoContainer}>
+          <Image source={require("../assets/logo.png")} style={styles.logo} />
+          <Text style={styles.welcomeText}>Bem-vindo de volta!</Text>
+          <Text style={styles.subtitle}>
+            Entre para continuar gerenciando suas tarefas
+          </Text>
+        </View>
+
+        <View style={styles.formContainer}>
+          <View style={styles.inputContainer}>
+            <Icon name="email-outline" size={24} color="#666" style={styles.icon} />
+            <TextInput
+              mode="outlined"
+              label="Email"
+              style={styles.input}
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              theme={{ colors: { primary: "#FF6F61" } }}
+              left={<TextInput.Icon icon="email" />}
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Icon name="lock-outline" size={24} color="#666" style={styles.icon} />
+            <TextInput
+              mode="outlined"
+              label="Senha"
+              style={styles.input}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              theme={{ colors: { primary: "#FF6F61" } }}
+              right={
+                <TextInput.Icon
+                  icon={showPassword ? "eye-off" : "eye"}
+                  onPress={() => setShowPassword(!showPassword)}
+                />
+              }
+            />
+          </View>
+
+          <Button
+            mode="contained"
+            onPress={loginUser}
+            loading={loading}
+            disabled={loading}
+            style={styles.loginButton}
+            contentStyle={styles.buttonContent}
+            labelStyle={styles.buttonLabel}
+          >
+            {loading ? "Entrando..." : "Entrar"}
+          </Button>
+
+          <TouchableOpacity
+            onPress={() => navigation.navigate("Register")}
+            style={styles.registerButton}
+          >
+            <Text style={styles.registerText}>Não tem uma conta?</Text>
+            <Text style={styles.registerLink}>Cadastre-se agora</Text>
+          </TouchableOpacity>
+        </View>
+
         <Snackbar
           visible={visible}
           onDismiss={() => setVisible(false)}
@@ -145,12 +168,6 @@ const LoginScreen: React.FC = () => {
         >
           {error}
         </Snackbar>
-        <TouchableOpacity
-          onPress={handleNavigateToRegister}
-          style={styles.registerButton}
-        >
-          <Text style={styles.registerButtonText}>Register</Text>
-        </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
   );
@@ -163,38 +180,81 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
     padding: 20,
+    justifyContent: "space-between",
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#FF6F61",
+  logoContainer: {
+    alignItems: "center",
+    marginTop: 60,
+  },
+  logo: {
+    width: 120,
+    height: 120,
+    resizeMode: "contain",
     marginBottom: 20,
+  },
+  welcomeText: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 40,
+  },
+  formContainer: {
+    width: "100%",
+    paddingHorizontal: 20,
+  },
+  inputContainer: {
+    marginBottom: 20,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  icon: {
+    marginRight: 10,
   },
   input: {
-    width: "100%",
-    marginBottom: 20,
+    flex: 1,
+    backgroundColor: "#fff",
     borderRadius: 8,
   },
-  button: {
-    width: "100%",
-    paddingVertical: 10,
+  loginButton: {
+    marginTop: 20,
     borderRadius: 8,
+    backgroundColor: "#FF6F61",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  buttonContent: {
+    height: 50,
+  },
+  buttonLabel: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  registerButton: {
+    marginTop: 30,
+    alignItems: "center",
+  },
+  registerText: {
+    color: "#666",
+    fontSize: 16,
+  },
+  registerLink: {
+    color: "#FF6F61",
+    fontSize: 16,
+    fontWeight: "bold",
+    marginTop: 5,
   },
   snackbar: {
     backgroundColor: "#FF6F61",
-  },
-  registerButton: {
-    marginTop: 20,
-    padding: 10,
-    backgroundColor: "blue",
-    borderRadius: 5,
-  },
-  registerButtonText: {
-    color: "#fff",
-    fontSize: 16,
   },
 });
 
