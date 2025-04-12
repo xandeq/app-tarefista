@@ -46,6 +46,7 @@ const RegisterScreen: React.FC = () => {
         const data = await response.json();
         const userId = data.userId;
         await syncTasksAfterRegistration(userId);
+        setModalVisible(false);
         setLoading(false);
         Toast.show({
           type: "success",
@@ -67,6 +68,7 @@ const RegisterScreen: React.FC = () => {
           if (errorData.error?.error?.message) {
             errorMessage = errorData.error.error.message;
           }
+          setModalVisible(false);
           
           console.log("Registration error:", errorData);
         } catch (e) {
@@ -95,6 +97,7 @@ const RegisterScreen: React.FC = () => {
       setVisible(true);
     } finally {
       setLoading(false);
+      setModalVisible(false);
     }
   };
 
