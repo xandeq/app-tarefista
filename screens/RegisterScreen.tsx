@@ -77,13 +77,20 @@ const RegisterScreen: React.FC = () => {
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Register</Text>
-        <TextInput mode='outlined' label='Display Name' style={styles.input} value={displayName} onChangeText={setDisplayName} theme={{ colors: { primary: "#FF6F61" } }} />
+        <Text style={styles.title}>Cadastre-se</Text>
+        <TextInput mode='outlined' label='Seu nome' style={styles.input} value={displayName} onChangeText={setDisplayName} theme={{ colors: { primary: "#FF6F61" } }} />
         <TextInput mode='outlined' label='Email' style={styles.input} value={email} onChangeText={setEmail} keyboardType='email-address' autoCapitalize='none' theme={{ colors: { primary: "#FF6F61" } }} />
         <TextInput mode='outlined' label='Password' style={styles.input} value={password} onChangeText={setPassword} secureTextEntry theme={{ colors: { primary: "#FF6F61" } }} />
-        <TextInput style={styles.input} placeholder='URL da Foto de Perfil (Opcional)' value={photoURL} onChangeText={setPhotoURL} />
-        <Button mode='contained' onPress={registerUser} loading={loading} disabled={loading} style={styles.button} buttonColor='#FF6F61'>
-          Register
+        <Button 
+          mode='contained' 
+          onPress={registerUser} 
+          loading={loading} 
+          disabled={loading} 
+          style={styles.button} 
+          buttonColor='#4a90e2'
+          icon="account-plus"
+        >
+          Cadastre-se
         </Button>
         <Snackbar visible={visible} onDismiss={() => setVisible(false)} duration={3000} style={styles.snackbar}>
           {error}
@@ -117,8 +124,14 @@ const styles = StyleSheet.create({
   },
   button: {
     width: "100%",
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderRadius: 8,
+    marginTop: 20,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   snackbar: {
     backgroundColor: "#FF6F61",
