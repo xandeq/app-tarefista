@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, KeyboardAvoidingView, Platform, Alert } from "react-native";
+import { View, StyleSheet, KeyboardAvoidingView, Platform, Alert, Modal, ActivityIndicator } from "react-native";
 import { Text, TextInput, Button, Snackbar } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../types";
@@ -17,9 +17,11 @@ const RegisterScreen: React.FC = () => {
   const [error, setError] = useState<string>("");
   const [visible, setVisible] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [modalVisible, setModalVisible] = useState<boolean>(false);
   const navigation = useNavigation<RegisterScreenNavigationProp>();
 
   const registerUser = async () => {
+    setModalVisible(true);
     if (email.trim() === "" || password.trim() === "") {
       Toast.show({
         type: "error",
@@ -117,6 +119,20 @@ const RegisterScreen: React.FC = () => {
         <Snackbar visible={visible} onDismiss={() => setVisible(false)} duration={3000} style={styles.snackbar}>
           {error}
         </Snackbar>
+
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <ActivityIndicator size="large" color="#FF6F61" />
+              <Text style={styles.modalText}>Aguarde por favor, estamos te cadastrando...</Text>
+            </View>
+          </View>
+        </Modal>
       </View>
     </KeyboardAvoidingView>
   );
@@ -157,6 +173,32 @@ const styles = StyleSheet.create({
   },
   snackbar: {
     backgroundColor: "#FF6F61",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  modalText: {
+    marginTop: 15,
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#333',
   },
 });
 
