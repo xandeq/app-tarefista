@@ -32,25 +32,27 @@ const db = firebase.firestore();
 export default function TaskScreen({ navigation, route }) {
   const [task, setTask] = useState("");
 
-  const addTask = async () => {
-    if (task.trim() === "") {
-      alert("Task cannot be empty");
-      return;
-    }
+  const addTask = async (taskData) => {
     try {
-      const docRef = await addDoc(collection(db, "tasks"), {
-        text: task,
-        completed: false,
-      });
-      console.log("Tarefa adicionada com sucesso: ", docRef.id);
-      if (route.params?.refreshTasks) {
-        route.params.refreshTasks();
+      const response = await axios.post(`${API_BASE_URL}/tasks`, taskData);
+  
+      if (response.data) {
+        console.log("Task added:", response.data);
+  
+        // Se a API retornar um novo tempUserId, salve no AsyncStorage e recarregue as tarefas
+        if (response.data.tempUserId && response.data.tempUserId !== userId) {
+          console.log("Novo tempUserId recebido após criação de tarefa:", response.data.tempUserId);
+          await saveUserId(response.data.tempUserId);
+          await fetchTasks(response.data.tempUserId); // Recarrega as tarefas com o novo ID
+        } else {
+          await fetchTasks(userId);
+        }
       }
-      navigation.goBack();
     } catch (error) {
-      console.error("Erro ao adicionar tarefa: ", error);
+      console.error("Erro ao adicionar tarefa:", error);
     }
   };
+  
 
   return (
     <KeyboardAvoidingView

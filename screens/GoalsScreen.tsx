@@ -4,6 +4,7 @@ import { Picker } from "@react-native-picker/picker";
 import Icon from "react-native-vector-icons/Ionicons";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import API_BASE_URL from "../config/apiConfig";
 
 // Tipos
 type Periodicity = "diaria" | "semanal" | "mensal" | "trimestral" | "semestral" | "anual";
@@ -42,7 +43,7 @@ const GoalsScreen = () => {
         return null;
       }
 
-      const response = await fetch("https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/userId", {
+      const response = await fetch(`${API_BASE_URL}/userId`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -73,12 +74,12 @@ const GoalsScreen = () => {
         return;
       }
 
-      const response = await axios.get("https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/goals", {
+      const response = await axios.get(`${API_BASE_URL}/goals`, {
         params: { userId },
       });
 
       if (response.status === 200) {
-        setGoals(response.data); // Atualiza o estado com as metas retornadas
+        setGoals(response.data);
       }
     } catch (error: any) {
       console.error("Erro ao buscar metas:", error);
@@ -89,7 +90,7 @@ const GoalsScreen = () => {
   // Função para deletar uma meta
   const deleteGoal = async (id: string) => {
     try {
-      const response = await axios.delete(`https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/goals/${id}`);
+      const response = await axios.delete(`${API_BASE_URL}/goals/${id}`);
       if (response.status === 200 || response.status === 204) {
         setGoals((prevGoals) => prevGoals.filter((goal) => goal.id !== id));
         Alert.alert("Meta deletada com sucesso!");
@@ -126,7 +127,7 @@ const GoalsScreen = () => {
       const goalWithUserId = { ...goal, userId };
       console.log("Adding goal:", goalWithUserId);
 
-      const response = await axios.post("https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/goals", goalWithUserId);
+      const response = await axios.post(`${API_BASE_URL}/goals`, goalWithUserId);
       if ((response.status === 201 || response.status === 200 || response.status === 202) && response.data.id) {
         setGoals((prevGoals) => [...prevGoals, { ...goalWithUserId, id: response.data.id }]);
         Alert.alert("Meta adicionada com sucesso!");

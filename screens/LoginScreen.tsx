@@ -13,6 +13,7 @@ import Toast from "react-native-toast-message";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "../context/AuthContext"; // Importar useAuth and UserType
 import { RootStackParamList } from "../types";
+import API_BASE_URL from "../config/apiConfig";
 
 type LoginScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -43,7 +44,7 @@ const LoginScreen: React.FC = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/login`,
+        `${API_BASE_URL}/login`,
         {
           method: "POST",
           headers: {

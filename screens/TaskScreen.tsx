@@ -5,9 +5,10 @@ import Animated, { SlideInUp } from "react-native-reanimated";
 import Icon from "react-native-vector-icons/Ionicons";
 import { getTaskCount, incrementTaskCount } from "../utils/taskTracker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import LottieView from "lottie-react-native";
+// import LottieView from "lottie-react-native";
 import { Task } from "../models/Task"; // Importando o modelo Task
 import DateTimePicker from "@react-native-community/datetimepicker";
+import API_BASE_URL from "../config/apiConfig";
 
 const recurrenceOptions = [
   { label: "Daily", value: "daily" },
@@ -99,7 +100,7 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
       let response;
       if (taskToEdit) {
         // Edit existing task
-        response = await fetch(`https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks/${taskToEdit.id}`, {
+        response = await fetch(`${API_BASE_URL}/tasks/${taskToEdit.id}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -109,7 +110,7 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
       } else {
         console.log("taskPayload: ", taskPayload);
         // Add new task
-        response = await fetch("https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks", {
+        response = await fetch(`${API_BASE_URL}/tasks`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -157,7 +158,7 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
 
   const deleteTask = async () => {
     try {
-      const response = await fetch(`https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks/${taskToEdit.id}`, {
+      const response = await fetch(`${API_BASE_URL}/tasks/${taskToEdit.id}`, {
         method: "DELETE",
       });
       if (response.ok) {
@@ -204,7 +205,7 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
 
       <Animated.View entering={SlideInUp} style={styles.content}>
         <View style={styles.titleContainer}>
-          <LottieView source={require("../assets/cleaning.json")} autoPlay loop style={styles.iconAnimation} />
+          {/* <LottieView source={require("../assets/cleaning.json")} autoPlay loop style={styles.iconAnimation} /> */}
           <Text variant='headlineLarge' style={styles.title}>
             Nova Tarefa
           </Text>
