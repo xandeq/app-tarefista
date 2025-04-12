@@ -27,6 +27,7 @@ interface TaskScreenProps {
 const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
   const [task, setTask] = useState<string>("");
   const [tasks, setTasks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [visible, setVisible] = useState<boolean>(false);
   const [isRecurring, setIsRecurring] = useState<boolean>(true);
@@ -71,6 +72,7 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
   };
 
   const saveTask = async () => {
+    setLoading(true);
     console.log("taskToEdit: ", taskToEdit);
     if (task.trim() === "") {
       setError("Task description cannot be empty");

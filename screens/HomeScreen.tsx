@@ -18,6 +18,7 @@ interface HomeScreenProps {
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [userId, setUserId] = useState<string | null>(null); // Declare the 'userId' variable
   const [quote, setQuote] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -358,9 +359,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
           <Icon name='add-circle' size={56} color='#FFFFFF' />
         </TouchableOpacity>
       </Animated.View>
-      {loading ? (
-        <ActivityIndicator size='large' color='#0000ff' />
-      ) : tasks.length === 0 ? (
+      {(loading || refreshing) && (
+        <View style={styles.overlayContainer}>
+          <ActivityIndicator size='large' color='#FF6F61' />
+        </View>
+      )}
+      {!loading && tasks.length === 0 ? (
         <View style={styles.emptyContainer}>
           {/* <LottieView
             source={require("../assets/empty-box.json")} // Caminho para o arquivo .json da animação
@@ -379,6 +383,17 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
+  overlayContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
+  },
   container: {
     flex: 1,
     backgroundColor: "#fff",
