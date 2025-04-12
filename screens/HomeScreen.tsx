@@ -16,7 +16,7 @@ interface HomeScreenProps {
 }
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
-  const [tasks, setTasks] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null); // Declare the 'userId' variable
   const [quote, setQuote] = useState<string>("");
@@ -269,6 +269,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
   };
 
   const filterTasksByDate = (tasks: Task[], selectedDate: Date): Task[] => {
+    if (!Array.isArray(tasks)) {
+      console.warn('Tasks is not an array:', tasks);
+      return [];
+    }
     return tasks.filter((task: any) => {
       const taskStartDate = task.startDate ? new Date(task.startDate._seconds * 1000) : null;
       const taskEndDate = task.endDate ? new Date(task.endDate._seconds * 1000) : null;
@@ -368,7 +372,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
           <Text style={styles.subMessage}>Adicione novas tarefas para vê-las aqui.</Text>
         </View>
       ) : (
-        <FlatList data={tasks} style={styles.flatList} keyExtractor={(item) => item.id} renderItem={({ item }) => <TaskItem task={item} onEdit={handleEditTask} onRemove={handleRemoveTask} refreshTasks={() => fetchTasks(userId!)} />} />
+        <FlatList data={filteredTasks} style={styles.flatList} keyExtractor={(item) => item.id} renderItem={({ item }) => <TaskItem task={item} onEdit={handleEditTask} onRemove={handleRemoveTask} refreshTasks={() => fetchTasks(userId!)} />} />
       )}
     </View>
   );
@@ -464,7 +468,7 @@ const styles = StyleSheet.create({
     color: "#fff", // Texto branco para destacar no fundo vermelho
   },
   header: {
-    display: "none",
+    display: "flex",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
