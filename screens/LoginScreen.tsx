@@ -16,6 +16,7 @@ import Toast from "react-native-toast-message";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "../context/AuthContext";
 import { RootStackParamList } from "../types";
+import API_BASE_URL from "../config/apiConfig";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, "Login">;
