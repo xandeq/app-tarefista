@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   View,
@@ -60,12 +59,11 @@ const LoginScreen: React.FC = () => {
         throw new Error("Não foi possível conectar ao servidor");
       }
       const responseData = await response.json();
-      if (responseData.token) {
+
+      if (response.ok && responseData.token) {
         await AsyncStorage.setItem("authToken", responseData.token);
         await AsyncStorage.setItem("user", JSON.stringify(responseData.user));
         setUser(responseData.user);
-      }
-      if (response.ok) {
         setLoading(false);
         Toast.show({
           type: "success",
@@ -77,7 +75,7 @@ const LoginScreen: React.FC = () => {
           routes: [{ name: "Home" }],
         });
       } else {
-        const errorMessage = await response.text();
+        const errorMessage = responseData.message || "Erro ao fazer login";
         Toast.show({
           type: "error",
           text1: "Erro",
