@@ -50,14 +50,14 @@ const LoginScreen: React.FC = () => {
           "Accept": "application/json"
         },
         body: JSON.stringify({ email, password }),
-      }).catch(error => {
-        console.error("Network error:", error);
-        throw new Error("Erro de conexão com o servidor");
       });
 
-      if (!response) {
-        throw new Error("Não foi possível conectar ao servidor");
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error("Server response:", errorData);
+        throw new Error(errorData || "Erro no servidor. Por favor, tente novamente.");
       }
+
       const responseData = await response.json();
 
       if (response.ok && responseData.token) {
