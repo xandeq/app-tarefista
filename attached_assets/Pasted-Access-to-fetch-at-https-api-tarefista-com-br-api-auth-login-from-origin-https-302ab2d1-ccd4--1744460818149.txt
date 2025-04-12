@@ -1,0 +1,111 @@
+Access to fetch at 'https://api.tarefista.com.br/api/auth/login' from origin 'https://302ab2d1-ccd4-4595-8e72-5cfced6c30d0-00-peunlgpweh7g.kirk.replit.dev' has been blocked by CORS policy: Request header field content-type is not allowed by Access-Control-Allow-Headers in preflight response.Understand this errorAI
+LoginScreen.tsx:46 
+            
+            
+           POST https://api.tarefista.com.br/api/auth/login net::ERR_FAILED
+window.fetch @ Network.js:219
+loginUser @ LoginScreen.tsx:46
+onClick @ PressResponder.js:314
+callCallback @ react-dom.development.js:4164
+invokeGuardedCallbackDev @ react-dom.development.js:4213
+invokeGuardedCallback @ react-dom.development.js:4277
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:4291
+executeDispatch @ react-dom.development.js:9041
+processDispatchQueueItemsInOrder @ react-dom.development.js:9073
+processDispatchQueue @ react-dom.development.js:9086
+dispatchEventsForPlugins @ react-dom.development.js:9097
+(anonymous) @ react-dom.development.js:9288
+batchedUpdates$1 @ react-dom.development.js:26140
+batchedUpdates @ react-dom.development.js:3991
+dispatchEventForPluginEventSystem @ react-dom.development.js:9287
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ react-dom.development.js:6465
+dispatchEvent @ react-dom.development.js:6457
+dispatchDiscreteEvent @ react-dom.development.js:6430Understand this errorAI
+Console.js:61 accessibilityLiveRegion is deprecated. Use aria-live.
+Mt.forEach.n.<computed> @ Console.js:61
+warnOnce @ index.js:24
+createDOMProps @ index.js:318
+createElement @ index.js:21
+(anonymous) @ index.js:109
+renderWithHooks @ react-dom.development.js:16305
+updateForwardRef @ react-dom.development.js:19226
+beginWork @ react-dom.development.js:21636
+beginWork$1 @ react-dom.development.js:27426
+performUnitOfWork @ react-dom.development.js:26560
+workLoopSync @ react-dom.development.js:26466
+renderRootSync @ react-dom.development.js:26434
+performSyncWorkOnRoot @ react-dom.development.js:26085
+flushSyncCallbacks @ react-dom.development.js:12042
+commitRootImpl @ react-dom.development.js:26959
+commitRoot @ react-dom.development.js:26682
+finishConcurrentRender @ react-dom.development.js:25981
+performConcurrentWorkOnRoot @ react-dom.development.js:25809
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533Understand this warningAI
+Network.js:219 
+            
+            
+           
+        
+       Uncaught (in promise) TypeError: Failed to fetch
+    at window.fetch (Network.js:219:37)
+    at loginUser (LoginScreen.tsx:46:30)
+    at onClick (PressResponder.js:314:13)
+    at HTMLUnknownElement.callCallback (react-dom.development.js:4164:14)
+    at Object.invokeGuardedCallbackDev (react-dom.development.js:4213:16)
+    at invokeGuardedCallback (react-dom.development.js:4277:31)
+    at invokeGuardedCallbackAndCatchFirstError (react-dom.development.js:4291:25)
+    at executeDispatch (react-dom.development.js:9041:3)
+    at processDispatchQueueItemsInOrder (react-dom.development.js:9073:7)
+    at processDispatchQueue (react-dom.development.js:9086:5)
+window.fetch @ Network.js:219
+loginUser @ LoginScreen.tsx:46
+onClick @ PressResponder.js:314
+callCallback @ react-dom.development.js:4164
+invokeGuardedCallbackDev @ react-dom.development.js:4213
+invokeGuardedCallback @ react-dom.development.js:4277
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:4291
+executeDispatch @ react-dom.development.js:9041
+processDispatchQueueItemsInOrder @ react-dom.development.js:9073
+processDispatchQueue @ react-dom.development.js:9086
+dispatchEventsForPlugins @ react-dom.development.js:9097
+(anonymous) @ react-dom.development.js:9288
+batchedUpdates$1 @ react-dom.development.js:26140
+batchedUpdates @ react-dom.development.js:3991
+dispatchEventForPluginEventSystem @ react-dom.development.js:9287
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ react-dom.development.js:6465
+dispatchEvent @ react-dom.development.js:6457
+dispatchDiscreteEvent @ react-dom.development.js:6430Understand this errorAI
+LoginScreen.tsx:46 
+            
+            
+           POST https://api.tarefista.com.br/api/auth/login 404 (Not Found)
+window.fetch @ Network.js:219
+loginUser @ LoginScreen.tsx:46
+onClick @ PressResponder.js:314
+callCallback @ react-dom.development.js:4164
+invokeGuardedCallbackDev @ react-dom.development.js:4213
+invokeGuardedCallback @ react-dom.development.js:4277
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:4291
+executeDispatch @ react-dom.development.js:9041
+processDispatchQueueItemsInOrder @ react-dom.development.js:9073
+processDispatchQueue @ react-dom.development.js:9086
+dispatchEventsForPlugins @ react-dom.development.js:9097
+(anonymous) @ react-dom.development.js:9288
+batchedUpdates$1 @ react-dom.development.js:26140
+batchedUpdates @ react-dom.development.js:3991
+dispatchEventForPluginEventSystem @ react-dom.development.js:9287
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ react-dom.development.js:6465
+dispatchEvent @ react-dom.development.js:6457
+dispatchDiscreteEvent @ react-dom.development.js:6430Understand this errorAI
+Console.js:61 Server response: <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Error</title>
+</head>
+<body>
+<pre>Cannot POST /api/auth/login</pre>
+</body>
+</html>
