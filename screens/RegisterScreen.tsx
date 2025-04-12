@@ -53,11 +53,15 @@ const RegisterScreen: React.FC = () => {
         navigation.navigate("Login");
       } else {
         const errorMessage = await response.text();
-        // Parse the error response
-        const errorData = JSON.parse(errorMessage);
-        const userMessage = errorData.error?.message === "The email address is already in use by another account." 
-          ? "Este email já está cadastrado. Por favor, use outro email ou faça login."
-          : "Erro ao realizar cadastro. Por favor, tente novamente.";
+        let userMessage;
+        try {
+          const errorData = JSON.parse(errorMessage);
+          userMessage = errorData.error?.message === "The email address is already in use by another account." 
+            ? "Este email já está cadastrado. Por favor, use outro email ou faça login."
+            : "Erro ao realizar cadastro. Por favor, tente novamente.";
+        } catch (e) {
+          userMessage = "Erro ao realizar cadastro. Por favor, tente novamente.";
+        }
         
         Alert.alert(
           "Não foi possível realizar o cadastro",
@@ -68,18 +72,7 @@ const RegisterScreen: React.FC = () => {
               style: "default",
               onPress: () => setVisible(false)
             }
-          ],
-          {
-            cancelable: true,
-            titleStyle: {
-              fontSize: 18,
-              fontWeight: 'bold',
-              color: '#FF6F61'
-            },
-            messageStyle: {
-              fontSize: 16
-            }
-          }
+          ]
         );
       }
     } catch (error: any) {
