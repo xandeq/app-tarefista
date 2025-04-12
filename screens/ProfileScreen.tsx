@@ -8,6 +8,7 @@ import Toast from "react-native-toast-message";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Animatable from "react-native-animatable";
 import Icon from "react-native-vector-icons/Ionicons"; // Biblioteca de ícones
+import API_BASE_URL from "../config/apiConfig";
 
 type RegisterScreenNavigationProp = NativeStackNavigationProp<ParamListBase, "Register">;
 
@@ -23,7 +24,7 @@ const ProfileScreen: React.FC = () => {
 
   const handleSignOut = async () => {
     try {
-      const response = await fetch("https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/logout", {
+      const response = await fetch(`${API_BASE_URL}/logout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

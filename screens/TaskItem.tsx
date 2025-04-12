@@ -3,7 +3,8 @@ import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import Animated, { SlideInLeft, SlideOutRight } from "react-native-reanimated";
 import { Audio } from "expo-av";
-import LottieView from "lottie-react-native";
+// import LottieView from "lottie-react-native";
+import API_BASE_URL from "../config/apiConfig";
 
 interface Task {
   id: string;
@@ -36,7 +37,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
     console.log("onPress: ", taskId);
     try {
       const response = await fetch(
-        `https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks/${taskId}`,
+        `${API_BASE_URL}/tasks/${taskId}`,
         {
           method: "DELETE",
         }
@@ -66,7 +67,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
   const handleComplete = async () => {
     try {
       const response = await fetch(
-        `https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks/${task.id}`,
+        `${API_BASE_URL}/tasks/${task.id}`,
         {
           method: "PUT",
           headers: {
@@ -137,12 +138,12 @@ const TaskItem: React.FC<TaskItemProps> = ({
       </TouchableOpacity>
       {showConfetti && (
         <View style={styles.overlay}>
-          <LottieView
+          {/* <LottieView
             source={require("../assets/thumbsup.json")}
             autoPlay
             loop={false}
             style={styles.thumbsup}
-          />
+          /> */}
         </View>
       )}
     </Animated.View>

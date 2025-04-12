@@ -5,9 +5,10 @@ import Icon from "react-native-vector-icons/Ionicons";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import LottieView from "lottie-react-native";
+// import LottieView from "lottie-react-native";
 import moment from "moment";
 import { Task } from "../models/Task";
+import API_BASE_URL from "../config/apiConfig";
 
 interface HomeScreenProps {
   navigation: any;
@@ -21,6 +22,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
   const [quote, setQuote] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
+
+  const saveUserId = async (newUserId: string) => {
+    await AsyncStorage.setItem("tempUserId", newUserId);
+    setUserId(newUserId);
+  };
 
   // Função para buscar as tarefas do usuário
   const fetchTasks = async (userId: string) => {
@@ -39,7 +45,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
 
       console.log("Token fetchTasks:", token);
 
-      const response = await axios.get("https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks", {
+      const response = await axios.get(`${API_BASE_URL}/tasks`, {
         // headers: {
         //   Authorization: `Bearer ${token}`,
         // },
@@ -49,6 +55,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
       if (response.data) {
         console.log("Tasks fetched:", response.data);
         setTasks(response.data);
+
+        if (response.data.tempUserId && response.data.tempUserId !== userId) {
+          console.log("Novo tempUserId recebido:", response.data.tempUserId);
+          await saveUserId(response.data.tempUserId);
+        }
       } else {
         console.error("Error fetching tasks:", response.statusText);
       }
@@ -61,21 +72,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
 
   const fetchQuote = async () => {
     try {
-      const response = await axios.get("https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/phrases");
+      const response = await axios.get(`${API_BASE_URL}/phrases`);
       const { phrase } = response.data; // A API retorna um objeto com a chave 'phrase'
       return phrase;
     } catch (error) {
       console.error("Error fetching phrase: ", error);
       return "Erro ao buscar frase";
-    }
-  };
-
-  const saveTasks = async (updatedTasks: any[]) => {
-    try {
-      await AsyncStorage.setItem("tasks", JSON.stringify(updatedTasks));
-      setTasks(updatedTasks);
-    } catch (error) {
-      console.error("Error saving tasks:", error);
     }
   };
 
@@ -86,7 +88,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
       // Primeiro, verifique se o userId já está no AsyncStorage
       let storedUserId = await AsyncStorage.getItem("tempUserId");
       if (storedUserId) {
-        console.log("User ID found in AsyncStorage:", storedUserId);
+        console.log("fetchUserId Token getItem tempUserId :", storedUserId);
         setUserId(storedUserId);
         return storedUserId;
       }
@@ -97,16 +99,16 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
         console.log("No authToken found in AsyncStorage");
         return null;
       }
-      console.log("Token fetchUserId:", token);
+      console.log("fetchUserId Token getItem authToken :", token);
 
       // Faça a chamada à API para obter o userId
-      const response = await fetch("https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/userId", {
+      const response = await fetch(`${API_BASE_URL}/userId`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-
+      console.log("fetchUserId response:", response);
       if (response.ok) {
         const data = await response.json();
         console.log("User ID from API:", data.userId);
@@ -228,7 +230,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
 
   const deleteTaskById = async (taskId: string) => {
     try {
-      const response = await fetch(`https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/tasks/${taskId}`, {
+      const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
         method: "DELETE",
       });
       if (!response.ok) {
@@ -356,12 +358,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
         <ActivityIndicator size='large' color='#0000ff' />
       ) : tasks.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <LottieView
+          {/* <LottieView
             source={require("../assets/empty-box.json")} // Caminho para o arquivo .json da animação
             autoPlay
             loop
             style={styles.animation}
-          />
+          /> */}
           <Text style={styles.emptyMessage}>Nenhuma tarefa encontrada!</Text>
           <Text style={styles.subMessage}>Adicione novas tarefas para vê-las aqui.</Text>
         </View>

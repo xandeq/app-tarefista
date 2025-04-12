@@ -5,6 +5,7 @@ import { useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../types";
 import Toast from "react-native-toast-message";
 import { StackNavigationProp } from "@react-navigation/stack";
+import API_BASE_URL from "../config/apiConfig";
 
 type RegisterScreenNavigationProp = StackNavigationProp<RootStackParamList, "Register">;
 
@@ -32,7 +33,7 @@ const RegisterScreen: React.FC = () => {
     setLoading(true);
     setPhotoURL("https://via.placeholder.com/150");
     try {
-      const response = await fetch(`https://tarefista-api-81ceecfa6b1c.herokuapp.com/api/register`, {
+      const response = await fetch(`${API_BASE_URL}/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
