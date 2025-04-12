@@ -158,6 +158,21 @@ const styles = StyleSheet.create({
 });
 
 export default RegisterScreen;
-function syncTasksAfterRegistration(userId: any) {
-  throw new Error("Function not implemented.");
+async function syncTasksAfterRegistration(userId: string) {
+  try {
+    // Get any temporary tasks stored with tempUserId
+    const response = await fetch(`${API_BASE_URL}/tasks/sync`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId }),
+    });
+    
+    if (!response.ok) {
+      console.error('Error syncing tasks:', await response.text());
+    }
+  } catch (error) {
+    console.error('Error in syncTasksAfterRegistration:', error);
+  }
 }
