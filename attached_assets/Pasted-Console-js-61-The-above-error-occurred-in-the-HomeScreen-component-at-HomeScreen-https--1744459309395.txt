@@ -1,0 +1,34 @@
+Console.js:61 The above error occurred in the <HomeScreen> component:
+
+    at HomeScreen (https://302ab2d1-ccd4-4595-8e72-5cfced6c30d0-00-peunlgpweh7g.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app:69343:7)
+    at StaticContainer (https://302ab2d1-ccd4-4595-8e72-5cfced6c30d0-00-peunlgpweh7g.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app:56956:18)
+    at EnsureSingleNavigator (https://302ab2d1-ccd4-4595-8e72-5cfced6c30d0-00-peunlgpweh7g.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app:53751:7)
+    at SceneView (https://302ab2d1-ccd4-4595-8e72-5cfced6c30d0-00-peunlgpweh7g.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app:56871:7)
+    at div
+    at https://302ab2d1-ccd4-4595-8e72-5cfced6c30d0-00-peunlgpweh7g.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app:37164:27
+    at div
+    at https://302ab2d1-ccd4-4595-8e72-5cfced6c30d0-00-peunlgpweh7g.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app:37164:27
+    at Background (https://302ab2d1-ccd4-4595-8e72-5cfced6c30d0-00-peunlgpweh7g.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app:60522:7)
+    at Screen (https://302ab2d1-ccd4-4595-8e72-5cfced6c30d0-00-peunlgpweh7g.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app:63260:73)
+    at div
+    at https://302ab2d1-ccd4-4595-8e72-5cfced6c30d0-00-peunlgpweh7g.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app:37164:27
+    at ResourceSavingScene (https://302ab2d1-ccd4-4595-8e72-5cfced6c30d0-00-peunlgpweh7g.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app:63068:7)
+    at MaybeScreen (https://302ab2d1-ccd4-4595-8e72-5cfced6c30d0-00-peunlgpweh7g.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app:69276:7)
+    at div
+    at https://302ab2d1-ccd4-4595-8e72-5cfced6c30d0-00-peunlgpweh7g.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app:37164:27
+    at MaybeScreenContainer (https://302ab2d1-ccd4-4595-8e72-5cfced6c30d0-00-peunlgpweh7g.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app:69262:7)
+    at div
+    at https://302ab2d1-ccd4-4595-8e72-5cfced6c30d0-00-peunlgpweh7g.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app:37164:27
+    at SafeAreaProviderCompat (https://302ab2d1-ccd4-4595-8e72-5cfced6c30d0-00-peunlgpweh7g.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app:63152:7)
+    at BottomTabView (https://302ab2d1-ccd4-4595-8e72-5cfced6c30d0-00-peunlgpweh7g.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app:68369:7)
+    at PreventRemoveProvider (https://302ab2d1-ccd4-4595-8e72-5cfced6c30d0-00-peunlgpweh7g.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app:55733:7)
+    at NavigationContent (https://302ab2d1-ccd4-4595-8e72-5cfced6c30d0-00-peunlgpweh7g.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app:56664:7)
+    at https://302ab2d1-ccd4-4595-8e72-5cfced6c30d0-00-peunlgpweh7g.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app:56681:9
+    at BottomTabNavigator (https://302ab2d1-ccd4-4595-8e72-5cfced6c30d0-00-peunlgpweh7g.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app:68267:7)
+    at MainTabs (https://302ab2d1-ccd4-4595-8e72-5cfced6c30d0-00-peunlgpweh7g.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app:51562:34)
+    at StaticContainer (https://302ab2d1-ccd4-4595-8e72-5cfced6c30d0-00-peunlgpweh7g.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app:56956:18)
+    at EnsureSingleNavigator (https://302ab2d1-ccd4-4595-8e72-5cfced6c30d0-00-peunlgpweh7g.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app:53751:7)
+    at SceneView (https://302ab2d1-ccd4-4595-8e72-5cfced6c30d0-0
+HomeScreen.tsx:272 Uncaught TypeError: tasks.filter is not a function
+    at filterTasksByDate (HomeScreen.tsx:272:18)
+    at HomeScreen.tsx:157:22
