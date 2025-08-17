@@ -1,0 +1,40 @@
+name: Deploy Tarefista
+
+on:
+  push:
+    branches:
+      - main   # dispara quando você der push na main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar dependências
+        run: npm ci
+        env:
+          NPM_CONFIG_PRODUCTION: false
+
+      - name: Build Expo Web
+        run: npm run build
+        env:
+          EXPO_NO_TELEMETRY: 1
+          NODE_OPTIONS: --max_old_space_size=4096
+          CI: false
+
+      - name: Deploy via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: win1151.site4now.net
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./dist
+          server-dir: /tarefista
