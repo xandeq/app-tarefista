@@ -43,8 +43,8 @@ Write-Host "1. Fazendo commit na branch main" -ForegroundColor Yellow
 git checkout main
 Check-LastCommand
 
+git add .
 if (CheckPendingChanges) {
-    git add .
     git commit -m $commitMessage
     Check-LastCommand
 }
