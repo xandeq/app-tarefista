@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from "react";
-import { StyleSheet, View, FlatList, ActivityIndicator, TouchableOpacity, Text, Alert } from "react-native";
-import TaskItem from "./TaskItem";
-import Icon from "react-native-vector-icons/Ionicons";
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
+import Icon from "react-native-vector-icons/Ionicons";
+import TaskItem from "./TaskItem";
 // import LottieView from "lottie-react-native";
 import moment from "moment";
-import { Task } from "../models/Task";
 import API_BASE_URL from "../config/apiConfig";
+import { Task } from "../models/Task";
 type TaskWithId = Task & { id: string };
 
 interface HomeScreenProps {
@@ -289,10 +289,38 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
     // ));
   };
 
+  const buildDeleteRequestContext = async (): Promise<{ queryString: string; headers?: Record<string, string> }> => {
+    const userIdFromJwt = await extractUserIdFromJwt();
+    if (userIdFromJwt) {
+      const authToken = await AsyncStorage.getItem("authToken");
+      return {
+        queryString: `userId=${encodeURIComponent(userIdFromJwt)}`,
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
+      };
+    }
+
+    const tempId = await AsyncStorage.getItem("tempUserId");
+    if (tempId) {
+      return {
+        queryString: `tempUserId=${encodeURIComponent(tempId)}`,
+      };
+    }
+
+    return { queryString: "" };
+  };
+
   const deleteTaskById = async (taskId: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
+      const { queryString, headers } = await buildDeleteRequestContext();
+      if (!queryString) {
+        console.warn("Não foi possível determinar userId/tempUserId para deletar a tarefa.");
+        return;
+      }
+
+      const url = `${API_BASE_URL}/tasks/${taskId}?${queryString}`;
+      const response = await fetch(url, {
         method: "DELETE",
+        headers,
       });
       if (!response.ok) {
         console.error("Erro ao deletar tarefa:", await response.text());

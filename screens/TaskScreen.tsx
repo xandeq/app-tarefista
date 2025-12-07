@@ -1,14 +1,14 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
-import { StyleSheet, KeyboardAvoidingView, Platform, Alert, View } from "react-native";
-import { Text, TextInput, Button, Appbar, Snackbar, Checkbox, Menu } from "react-native-paper";
+import { Alert, KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
+import { Appbar, Button, Checkbox, Menu, Snackbar, Text, TextInput } from "react-native-paper";
 import Animated, { SlideInUp } from "react-native-reanimated";
 import Icon from "react-native-vector-icons/Ionicons";
-import { getTaskCount, incrementTaskCount } from "../utils/taskTracker";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { incrementTaskCount } from "../utils/taskTracker";
 // import LottieView from "lottie-react-native";
-import { Task } from "../models/Task"; // Importando o modelo Task
 import DateTimePicker from "@react-native-community/datetimepicker";
 import API_BASE_URL from "../config/apiConfig";
+import { Task } from "../models/Task"; // Importando o modelo Task
 
 const recurrenceOptions = [
   { label: "Daily", value: "daily" },
@@ -188,9 +188,29 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
 
   const deleteTask = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/tasks/${taskToEdit.id}`, {
+      const { userId: userIdFromJwt, authToken } = await getEffectiveUserId();
+      const tempUserId = userIdFromJwt ? null : await AsyncStorage.getItem("tempUserId");
+
+      const params = new URLSearchParams();
+      if (userIdFromJwt) {
+        params.append("userId", userIdFromJwt);
+      } else if (tempUserId) {
+        params.append("tempUserId", tempUserId);
+      }
+
+      const headers: Record<string, string> = {};
+      if (authToken) {
+        headers.Authorization = `Bearer ${authToken}`;
+      }
+
+      const queryString = params.toString();
+      const url = queryString ? `${API_BASE_URL}/tasks/${taskToEdit.id}?${queryString}` : `${API_BASE_URL}/tasks/${taskToEdit.id}`;
+
+      const response = await fetch(url, {
         method: "DELETE",
+        headers: Object.keys(headers).length ? headers : undefined,
       });
+
       if (response.ok) {
         if (typeof route.params?.refreshTasks === "function") {
           route.params.refreshTasks();
