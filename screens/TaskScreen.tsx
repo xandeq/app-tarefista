@@ -71,32 +71,58 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
     setShowEndDatePicker(true);
   };
 
+  // ADD (acima de saveTask)
+  const getJwtUserId = async (): Promise<string | null> => {
+    const token = await AsyncStorage.getItem("authToken");
+    if (!token) return null;
+    try {
+      const [, payloadB64] = token.split(".");
+      const json = atob(payloadB64.replace(/-/g, "+").replace(/_/g, "/"));
+      const data = JSON.parse(json);
+      return typeof data.userId === "string" ? data.userId : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const getEffectiveUserId = async (): Promise<{ userId: string | null; authToken: string | null }> => {
+    const authToken = await AsyncStorage.getItem("authToken");
+    const userIdFromJwt = await getJwtUserId();
+    if (userIdFromJwt) return { userId: userIdFromJwt, authToken };
+    return { userId: null, authToken: null };
+  };
+
   const saveTask = async () => {
     setLoading(true);
     console.log("taskToEdit: ", taskToEdit);
     if (task.trim() === "") {
       setError("Task description cannot be empty");
       setVisible(true);
+      setLoading(false); // ADD
       return;
     }
 
+    const { userId: userIdFromJwt, authToken } = await getEffectiveUserId();
     const tempUserId = await AsyncStorage.getItem("tempUserId");
-    const timestamp = new Date().toISOString();
 
-    const taskPayload: Task = {
-      userId: taskToEdit?.userId || "",
-      text: task || "",
-      completed: taskToEdit?.completed || false,
-      createdAt: taskToEdit?.createdAt ?? new Date().toISOString(), // Substitui null por uma data atual
+    const taskPayload: Partial<Task> = {
+      // se tem JWT, manda userId; senão, deixa undefined
+      userId: userIdFromJwt ?? undefined,
+      // se NÃO tem JWT, manda tempUserId; senão, undefined
+      tempUserId: userIdFromJwt ? undefined : tempUserId ?? undefined,
+
+      text: task.trim(),
+      completed: taskToEdit?.completed ?? false,
+      createdAt: taskToEdit?.createdAt ?? new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      tempUserId: tempUserId ?? "",
-      isRecurring: isRecurring,
-      recurrencePattern: isRecurring ? recurrencePattern : "",
-      startDate: isRecurring ? (startDate ? startDate.toISOString() : "") : "", // Substitui null por string vazia
-      endDate: isRecurring ? (endDate ? endDate.toISOString() : "") : "", // Substitui null por string vazia
+      isRecurring,
+      recurrencePattern: isRecurring ? recurrencePattern : undefined,
+      startDate: isRecurring ? startDate.toISOString() : undefined,
+      endDate: isRecurring ? (endDate ? endDate.toISOString() : undefined) : undefined,
     };
+    // remove chaves undefined
+    Object.keys(taskPayload).forEach((k) => (taskPayload as any)[k] === undefined && delete (taskPayload as any)[k]);
 
-    (Object.keys(taskPayload) as (keyof Task)[]).forEach((key) => taskPayload[key] === undefined && delete taskPayload[key]);
     console.log("taskPayload: ", taskPayload);
     try {
       let response;
@@ -106,6 +132,7 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
+            ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
           },
           body: JSON.stringify(taskPayload),
         });
@@ -116,6 +143,7 @@ const TaskScreen: React.FC<TaskScreenProps> = ({ navigation, route }) => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
           },
           body: JSON.stringify(taskPayload),
         });

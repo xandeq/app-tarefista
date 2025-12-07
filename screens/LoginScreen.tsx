@@ -30,6 +30,21 @@ const LoginScreen: React.FC = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const { setUser } = useAuth() as { setUser: (user: any) => void };
 
+  const getFriendlyErrorMessage = (status?: number, serverMessage?: string) => {
+    const msg = (serverMessage || "").toLowerCase();
+    if (status === 400 || status === 401 || status === 403) {
+      return "Email ou senha incorretos. Verifique e tente novamente.";
+    }
+    if (status === 404) return "Serviço de login indisponível. Tente novamente mais tarde.";
+    if (status === 422) return "Dados inválidos. Revise os campos e tente novamente.";
+    if (status === 429) return "Muitas tentativas. Aguarde alguns instantes e tente novamente.";
+    if (status && status >= 500) return "Erro no servidor. Tente novamente mais tarde.";
+    if (msg.includes("invalid") || msg.includes("senha") || msg.includes("password") || msg.includes("credenciais")) {
+      return "Credenciais inválidas. Verifique e tente novamente.";
+    }
+    return "Não foi possível realizar o login. Tente novamente.";
+  };
+
   const loginUser = async () => {
     if (email.trim() === "" || password.trim() === "") {
       Toast.show({
@@ -43,20 +58,41 @@ const LoginScreen: React.FC = () => {
     }
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/login`, {
+      const response = await fetch(`${API_BASE_URL}/Auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Accept": "application/json",
-          "Origin": window.location.origin
+          ...(Platform.OS === "web" ? { Origin: (window as any)?.location?.origin } : {}),
         },
         body: JSON.stringify({ email, password }),
       });
 
       if (!response.ok) {
-        const errorData = await response.text();
-        console.error("Server response:", errorData);
-        throw new Error(errorData || "Erro no servidor. Por favor, tente novamente.");
+        let serverMessage: string | undefined;
+        const contentType = response.headers.get("content-type") || "";
+        try {
+          if (contentType.includes("application/json")) {
+            const data = await response.json();
+            serverMessage = (data && (data.message || data.error)) || undefined;
+          } else {
+            const text = await response.text();
+            serverMessage = text; // logar corpo completo no console
+          }
+        } catch (e) {
+          // ignore parsing errors
+        }
+
+        const friendly = getFriendlyErrorMessage(response.status, serverMessage);
+        console.error("Login error", {
+          status: response.status,
+          url: `${API_BASE_URL}/Auth/login`,
+          body: serverMessage,
+        });
+        Toast.show({ type: "error", text1: "Erro", text2: friendly });
+        setError(friendly);
+        setVisible(true);
+        return;
       }
 
       const responseData = await response.json();
@@ -64,6 +100,7 @@ const LoginScreen: React.FC = () => {
       if (response.ok && responseData.token) {
         await AsyncStorage.setItem("authToken", responseData.token);
         await AsyncStorage.setItem("user", JSON.stringify(responseData.user));
+        await AsyncStorage.setItem("userId", responseData.userId);
         setUser(responseData.user);
         setLoading(false);
         Toast.show({
@@ -86,12 +123,17 @@ const LoginScreen: React.FC = () => {
         setVisible(true);
       }
     } catch (error: any) {
-      Toast.show({
-        type: "error",
-        text1: "Erro",
-        text2: "Erro ao fazer login: " + error.message,
-      });
-      setError("Erro ao fazer login: " + error.message);
+      const msg = error?.message?.toLowerCase() || "";
+      const isNetwork =
+        msg.includes("network request failed") ||
+        msg.includes("failed to fetch") ||
+        msg.includes("networkerror");
+      const friendly = isNetwork
+        ? "Falha de conexão. Verifique sua internet e tente novamente."
+        : "Não foi possível realizar o login. Tente novamente.";
+      console.error("Login request failed", { error });
+      Toast.show({ type: "error", text1: "Erro", text2: friendly });
+      setError(friendly);
       setVisible(true);
     } finally {
       setLoading(false);

@@ -24,39 +24,58 @@ const ProfileScreen: React.FC = () => {
 
   const handleSignOut = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/logout`, {
+      const token = await AsyncStorage.getItem("authToken");
+      const headers: Record<string, string> = {};
+      if (token) headers.Authorization = `Bearer ${token}`; // envie o token se existir
+
+      const response = await fetch(`${API_BASE_URL}/Auth/logout`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers, // sem Content-Type pq não há body
       });
 
+      // leitura segura da resposta (pode vir vazia)
+      const contentType = response.headers.get("content-type") || "";
+      let payload: any = null;
+      if (contentType.includes("application/json")) {
+        try {
+          payload = await response.json();
+        } catch {
+          payload = null; // corpo vazio
+        }
+      } else {
+        const text = await response.text();
+        payload = text ? { message: text } : null;
+      }
+
       if (response.ok) {
+        // Limpa credenciais localmente (idempotente)
         await AsyncStorage.removeItem("authToken");
         await AsyncStorage.removeItem("user");
+        // opcional: também remover tempUserId se quiser força de novo guest
+        // await AsyncStorage.removeItem("tempUserId");
 
         setUser(null);
-        navigation.reset({
-          index: 0,
-          routes: [{ name: "Home" }],
-        });
+        navigation.reset({ index: 0, routes: [{ name: "Home" }] });
       } else {
-        const errorData = await response.json();
-        console.error("Logout failed:", errorData);
-
+        console.error("Logout failed:", payload);
         Toast.show({
           type: "error",
           text1: "Falha no Logout",
-          text2: errorData.message || "Não foi possível realizar o logout. Tente novamente.",
+          text2: (payload && (payload.message || payload.error)) || "Não foi possível realizar o logout.",
         });
       }
     } catch (error: any) {
       console.error("Erro ao fazer logout: ", error);
+      // mesmo com erro de rede, finalize localmente (idempotente)
+      await AsyncStorage.removeItem("authToken");
+      await AsyncStorage.removeItem("user");
+      setUser(null);
+      navigation.reset({ index: 0, routes: [{ name: "Home" }] });
 
       Toast.show({
-        type: "error",
-        text1: "Erro ao Fazer Logout",
-        text2: error.message || "Ocorreu um erro inesperado ao tentar sair. Verifique sua conexão ou tente novamente mais tarde.",
+        type: "info",
+        text1: "Sessão encerrada localmente",
+        text2: "Sem comunicação com o servidor, mas sua sessão foi limpa no aparelho.",
       });
     }
   };

@@ -9,6 +9,7 @@ import axios from "axios";
 import moment from "moment";
 import { Task } from "../models/Task";
 import API_BASE_URL from "../config/apiConfig";
+type TaskWithId = Task & { id: string };
 
 interface HomeScreenProps {
   navigation: any;
@@ -16,53 +17,96 @@ interface HomeScreenProps {
 }
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<TaskWithId[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [userId, setUserId] = useState<string | null>(null); // Declare the 'userId' variable
   const [quote, setQuote] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
+  const [filteredTasks, setFilteredTasks] = useState<TaskWithId[]>([]);
+
+  // ADD: normalizador de datas vindas como ISO, number ou Firestore Timestamp
+  const toDate = (v: any): Date | undefined => {
+    if (!v) return undefined;
+    if (v instanceof Date) return v;
+    if (typeof v === "string" || typeof v === "number") return new Date(v);
+    if (v._seconds) return new Date(v._seconds * 1000);
+    if (v.seconds) return new Date(v.seconds * 1000);
+    return undefined;
+  };
+
+  // ADD: mapeia a task crua da API para TaskWithId (garantindo id)
+  const normalizeFromApi = (raw: any): TaskWithId | null => {
+    const id = typeof raw?.id === "string" ? raw.id : undefined;
+    if (!id) return null;
+    return {
+      id,
+      text: String(raw?.text ?? ""),
+      completed: Boolean(raw?.completed),
+      createdAt: toDate(raw?.createdAt),
+      updatedAt: toDate(raw?.updatedAt)?.toISOString() ?? "",
+      isRecurring: Boolean(raw?.isRecurring),
+      recurrencePattern: raw?.recurrencePattern ?? undefined,
+      startDate: toDate(raw?.startDate)?.toISOString(),
+      endDate: toDate(raw?.endDate)?.toISOString(),
+      userId: raw?.userId ?? undefined,
+      tempUserId: raw?.tempUserId ?? undefined,
+    };
+  };
 
   const saveUserId = async (newUserId: string) => {
     await AsyncStorage.setItem("tempUserId", newUserId);
     setUserId(newUserId);
   };
 
-  // Função para buscar as tarefas do usuário
-  const fetchTasks = async (userId: string) => {
+  // ADD (acima do fetchTasks) — extrai userId do JWT salvo no AsyncStorage
+  const extractUserIdFromJwt = async (): Promise<string | null> => {
+    const token = await AsyncStorage.getItem("authToken");
+    if (!token) return null;
     try {
-      let token = await AsyncStorage.getItem("authToken");
+      const [, payloadB64] = token.split(".");
+      const json = atob(payloadB64.replace(/-/g, "+").replace(/_/g, "/"));
+      const data = JSON.parse(json);
+      return typeof data.userId === "string" ? data.userId : null;
+    } catch {
+      return null;
+    }
+  };
 
-      if (!token) {
-        console.log("Token fetchTasks is null, using tempUserId instead");
-        token = await AsyncStorage.getItem("tempUserId");
-      }
+  const fetchTasks = async () => {
+    try {
+      setLoading(true);
 
-      if (!token) {
-        console.error("No authToken or tempUserId found, cannot fetch tasks");
+      // 1) tenta userId do JWT (logado)
+      const userIdFromJwt = await extractUserIdFromJwt();
+
+      // 2) tenta tempUserId salvo (anônimo)
+      const tempId = await AsyncStorage.getItem("tempUserId");
+
+      // 3) monta params corretos
+      const params = userIdFromJwt ? { userId: userIdFromJwt } : tempId ? { tempUserId: tempId } : null;
+
+      if (!params) {
+        console.error("Sem userId e sem tempUserId — não há como buscar tarefas");
+        setTasks([]);
         return;
       }
 
-      console.log("Token fetchTasks:", token);
+      // 4) header Authorization só se tiver JWT
+      const authToken = await AsyncStorage.getItem("authToken");
+      const headers = authToken ? { Authorization: `Bearer ${authToken}` } : undefined;
 
       const response = await axios.get(`${API_BASE_URL}/tasks`, {
-        // headers: {
-        //   Authorization: `Bearer ${token}`,
-        // },
-        params: { tempUserId: userId }, // Pass the userId or tempUserId here
+        headers,
+        params,
       });
 
-      if (response.data) {
-        console.log("Tasks fetched:", response.data);
-        setTasks(response.data);
-
-        if (response.data.tempUserId && response.data.tempUserId !== userId) {
-          console.log("Novo tempUserId recebido:", response.data.tempUserId);
-          await saveUserId(response.data.tempUserId);
-        }
+      if (Array.isArray(response.data)) {
+        const normalized = response.data.map(normalizeFromApi).filter((t): t is TaskWithId => t !== null);
+        setTasks(normalized);
       } else {
-        console.error("Error fetching tasks:", response.statusText);
+        console.warn("Formato inesperado ao buscar tasks:", response.data);
+        setTasks([]);
       }
     } catch (error) {
       console.error("Error fetching tasks:", error);
@@ -103,7 +147,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
       console.log("fetchUserId Token getItem authToken :", token);
 
       // Faça a chamada à API para obter o userId
-      const response = await fetch(`${API_BASE_URL}/userId`, {
+      const response = await fetch(`${API_BASE_URL}/Auth/userId`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -119,7 +163,23 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
         setUserId(data.userId);
         return data.userId;
       } else {
-        console.error("Error fetching user ID:", await response.text());
+        const status = response.status;
+        const bodyText = await response.text();
+        console.error("Error fetching user ID:", status, bodyText);
+
+        if (status === 401) {
+          // Token expirou -> limpa e usa convidado
+          await AsyncStorage.removeItem("authToken");
+        }
+
+        // Fallback: tempUserId
+        const tempResp = await fetch(`${API_BASE_URL}/Auth/tempUserId`);
+        if (tempResp.ok) {
+          const { tempUserId } = await tempResp.json();
+          await AsyncStorage.setItem("tempUserId", tempUserId);
+          setUserId(tempUserId);
+          return tempUserId;
+        }
         return null;
       }
     } catch (error) {
@@ -135,7 +195,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
       const fetchedUserId = await fetchUserId();
       console.log("fetchedUserId:", fetchedUserId);
       if (fetchedUserId) {
-        await fetchTasks(fetchedUserId);
+        await fetchTasks();
       } else {
         setLoading(false); // Garantir que o loading pare mesmo que o userId não seja encontrado
       }
@@ -147,7 +207,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
 
     const unsubscribe = navigation.addListener("focus", () => {
       if (userId) {
-        fetchTasks(userId); // Chama fetchTasks com o userId do estado
+        fetchTasks(); // Chama fetchTasks com o userId do estado
       }
     });
 
@@ -174,8 +234,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
     scale.value = withSpring(1);
   };
 
-  const handleEditTask = (task: any) => {
-    navigation.navigate("Tasks", { task: task });
+  const handleEditTask = (task: Task) => {
+    navigation.navigate("Tasks", { task });
   };
 
   const handleRemoveTask = (taskId: string) => {
@@ -256,7 +316,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
             style: "destructive",
             onPress: async () => {
               for (const task of tasks) {
-                await deleteTaskById(task.id);
+                if (task?.id) {
+                  await deleteTaskById(task.id);
+                }
               }
               setTasks([]); // Limpa a lista localmente após deletar
             },
@@ -269,15 +331,16 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
     }
   };
 
-  const filterTasksByDate = (tasks: Task[], selectedDate: Date): Task[] => {
+  const filterTasksByDate = (tasks: TaskWithId[], selectedDate: Date): TaskWithId[] => {
     if (!Array.isArray(tasks)) {
-      console.warn('Tasks is not an array:', tasks);
+      console.warn("Tasks is not an array:", tasks);
       return [];
     }
     return tasks.filter((task: any) => {
-      const taskStartDate = task.startDate ? new Date(task.startDate._seconds * 1000) : null;
-      const taskEndDate = task.endDate ? new Date(task.endDate._seconds * 1000) : null;
-      const taskCreatedAt = task.createdAt ? new Date(task.createdAt._seconds * 1000) : null;
+      if (typeof task.id !== "string" || !task.id) return false;
+      const taskStartDate = task.startDate ? new Date(task.startDate as unknown as Date) : undefined;
+      const taskEndDate = task.endDate ? new Date(task.endDate as unknown as Date) : undefined;
+      const taskCreatedAt = task.createdAt ? new Date(task.createdAt as unknown as Date) : undefined;
 
       // Converte a data selecionada para uma string no formato "YYYY-MM-DD"
       const selectedDateStr = moment(selectedDate).format("YYYY-MM-DD");
@@ -376,7 +439,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
           <Text style={styles.subMessage}>Adicione novas tarefas para vê-las aqui.</Text>
         </View>
       ) : (
-        <FlatList data={filteredTasks} style={styles.flatList} keyExtractor={(item) => item.id} renderItem={({ item }) => <TaskItem task={item} onEdit={handleEditTask} onRemove={handleRemoveTask} refreshTasks={() => fetchTasks(userId!)} />} />
+        <FlatList data={filteredTasks} style={styles.flatList} keyExtractor={(item, index) => String(item.id)} renderItem={({ item }) => <TaskItem task={item} onEdit={handleEditTask} onRemove={handleRemoveTask} refreshTasks={() => fetchTasks()} />} />
       )}
     </View>
   );
@@ -384,14 +447,14 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation, route }) => {
 
 const styles = StyleSheet.create({
   overlayContainer: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    justifyContent: "center",
+    alignItems: "center",
     zIndex: 999,
   },
   container: {

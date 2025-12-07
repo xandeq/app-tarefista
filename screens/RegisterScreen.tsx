@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { View, StyleSheet, KeyboardAvoidingView, Platform, Alert, Modal, ActivityIndicator } from "react-native";
-import { Text, TextInput, Button, Snackbar } from "react-native-paper";
+import { View, StyleSheet, KeyboardAvoidingView, Platform, Modal, ActivityIndicator } from "react-native";
+import { Text, TextInput, Button } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../types";
 import Toast from "react-native-toast-message";
@@ -14,92 +14,77 @@ const RegisterScreen: React.FC = () => {
   const [password, setPassword] = useState<string>("");
   const [displayName, setDisplayName] = useState<string>("");
   const [photoURL, setPhotoURL] = useState<string>("");
-  const [error, setError] = useState<string>("");
-  const [visible, setVisible] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-  const [modalVisible, setModalVisible] = useState<boolean>(false);
   const navigation = useNavigation<RegisterScreenNavigationProp>();
 
   const registerUser = async () => {
-    setModalVisible(true);
-    if (email.trim() === "" || password.trim() === "") {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "Email and password cannot be empty",
-      });
-      setError("Email and password cannot be empty");
-      setVisible(true);
+    if (!email.trim() || !password.trim()) {
+      toastError("Email e senha são obrigatórios.", "Erro");
       return;
     }
+
     setLoading(true);
-    setPhotoURL("https://via.placeholder.com/150");
+
     try {
-      const response = await fetch(`${API_BASE_URL}/register`, {
+      const payload = {
+        email: email.trim(),
+        password: password.trim(),
+        displayName: displayName.trim(),
+        photoURL: (photoURL && photoURL.trim()) || "https://via.placeholder.com/150",
+      };
+
+      const response = await fetch(`${API_BASE_URL}/Auth/register`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password, displayName, photoURL }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
-      if (response.ok) {
-        const data = await response.json();
-        const userId = data.userId;
-        await syncTasksAfterRegistration(userId);
-        setModalVisible(false);
-        setLoading(false);
-        Toast.show({
-          type: "success",
-          text1: "Sucesso",
-          text2: "Usuário registrado com sucesso",
-        });
-        navigation.navigate("Login");
-      } else {
-        let errorMessage;
-        try {
-          const errorText = await response.text();
-          const errorData = JSON.parse(errorText);
-          
-          // Check different error message locations, including nested error object
-          errorMessage = errorData.error?.message || 
-                        errorData.message || 
-                        "Erro ao realizar cadastro. Por favor, tente novamente.";
-          
-          if (errorData.error?.error?.message) {
-            errorMessage = errorData.error.error.message;
-          }
-          setModalVisible(false);
-          
-          console.log("Registration error:", errorData);
-        } catch (e) {
-          console.error("Error parsing error response:", e);
-          errorMessage = "Erro ao realizar cadastro. Por favor, tente novamente.";
-        }
-        
-        Toast.show({
-          type: "error",
-          text1: "Erro no Cadastro",
-          text2: errorMessage,
-          position: "bottom",
-          visibilityTime: 4000
-        });
-        
-        setError(errorMessage);
-        setVisible(true);
+
+      if (!response.ok) {
+        throw new Error(await parseApiError(response));
       }
-    } catch (error: any) {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "Error registering user: " + error.message,
-      });
-      setError("Error registering user: " + error.message);
-      setVisible(true);
+
+      const data = (await response.json()) as { userId: string };
+      await syncTasksAfterRegistration(data.userId);
+
+      toastSuccess("Usuário registrado com sucesso");
+      navigation.navigate("Login");
+    } catch (err: any) {
+      const message = err?.message ?? "Erro ao realizar cadastro. Por favor, tente novamente.";
+      toastError(message);
     } finally {
       setLoading(false);
-      setModalVisible(false);
     }
   };
+
+  function toastSuccess(text2: string, text1 = "Sucesso") {
+    Toast.show({ type: "success", text1, text2 });
+  }
+
+  function toastError(text2: string, text1 = "Erro no Cadastro") {
+    Toast.show({ type: "error", text1, text2, position: "bottom", visibilityTime: 4000 });
+  }
+
+  /**
+   * Converte respostas de erro em uma mensagem legível.
+   * Cobertura:
+   * - Middleware .NET (ExceptionMiddleware): data.error.message
+   * - Mensagens simples: data.message
+   * - Arrays de erros: data.errors[0].message
+   * - Texto puro (fallback)
+   */
+  async function parseApiError(response: Response): Promise<string> {
+    try {
+      const ct = response.headers.get("content-type") || "";
+      if (ct.includes("application/json")) {
+        const data = await response.json();
+        return data?.error?.message || data?.message || data?.errors?.[0]?.message || "Erro ao realizar cadastro. Por favor, tente novamente.";
+      }
+      const text = await response.text();
+      return text || "Erro ao realizar cadastro. Por favor, tente novamente.";
+    } catch {
+      return "Erro ao realizar cadastro. Por favor, tente novamente.";
+    }
+  }
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.container}>
@@ -108,30 +93,14 @@ const RegisterScreen: React.FC = () => {
         <TextInput mode='outlined' label='Seu nome' style={styles.input} value={displayName} onChangeText={setDisplayName} theme={{ colors: { primary: "#FF6F61" } }} />
         <TextInput mode='outlined' label='Email' style={styles.input} value={email} onChangeText={setEmail} keyboardType='email-address' autoCapitalize='none' theme={{ colors: { primary: "#FF6F61" } }} />
         <TextInput mode='outlined' label='Password' style={styles.input} value={password} onChangeText={setPassword} secureTextEntry theme={{ colors: { primary: "#FF6F61" } }} />
-        <Button 
-          mode='contained' 
-          onPress={registerUser} 
-          loading={loading} 
-          disabled={loading} 
-          style={styles.button} 
-          buttonColor='#4a90e2'
-          icon="account-plus"
-        >
+        <Button mode='contained' onPress={registerUser} loading={loading} disabled={loading} style={styles.button} buttonColor='#4a90e2' icon='account-plus'>
           Cadastre-se
         </Button>
-        <Snackbar visible={visible} onDismiss={() => setVisible(false)} duration={3000} style={styles.snackbar}>
-          {error}
-        </Snackbar>
 
-        <Modal
-          animationType="fade"
-          transparent={true}
-          visible={modalVisible}
-          onRequestClose={() => setModalVisible(false)}
-        >
+        <Modal animationType='fade' transparent={true} visible={loading} onRequestClose={() => {}}>
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
-              <ActivityIndicator size="large" color="#FF6F61" />
+              <ActivityIndicator size='large' color='#FF6F61' />
               <Text style={styles.modalText}>Aguarde por favor, estamos te cadastrando...</Text>
             </View>
           </View>
@@ -169,30 +138,27 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 20,
     elevation: 3,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
-  snackbar: {
-    backgroundColor: "#FF6F61",
-  },
   modalContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     padding: 20,
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
     elevation: 5,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 2
+      height: 2,
     },
     shadowOpacity: 0.25,
     shadowRadius: 4,
@@ -200,8 +166,8 @@ const styles = StyleSheet.create({
   modalText: {
     marginTop: 15,
     fontSize: 16,
-    textAlign: 'center',
-    color: '#333',
+    textAlign: "center",
+    color: "#333",
   },
 });
 
@@ -210,17 +176,17 @@ async function syncTasksAfterRegistration(userId: string) {
   try {
     // Get any temporary tasks stored with tempUserId
     const response = await fetch(`${API_BASE_URL}/tasks/sync`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ userId }),
     });
-    
+
     if (!response.ok) {
-      console.error('Error syncing tasks:', await response.text());
+      console.error("Error syncing tasks:", await response.text());
     }
   } catch (error) {
-    console.error('Error in syncTasksAfterRegistration:', error);
+    console.error("Error in syncTasksAfterRegistration:", error);
   }
 }

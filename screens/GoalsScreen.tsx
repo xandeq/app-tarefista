@@ -19,6 +19,19 @@ const periodicityColors = {
   anual: "black",
 };
 
+const extractUserIdFromJwt = async (): Promise<string | null> => {
+  const token = await AsyncStorage.getItem("authToken");
+  if (!token) return null;
+  try {
+    const [, payloadB64] = token.split(".");
+    const json = atob(payloadB64.replace(/-/g, "+").replace(/_/g, "/"));
+    const data = JSON.parse(json);
+    return typeof data.userId === "string" ? data.userId : null;
+  } catch {
+    return null;
+  }
+};
+
 const GoalsScreen = () => {
   const [goals, setGoals] = useState<{ id: string; text: string; periodicity: Periodicity; userId: string }[]>([]);
   const [selectedPeriodicity, setSelectedPeriodicity] = useState<Periodicity>("diaria");
@@ -29,57 +42,38 @@ const GoalsScreen = () => {
   // Filtra as metas pela periodicidade selecionada
   const filteredGoals = goals.filter((goal) => goal.periodicity === selectedPeriodicity);
 
-  const fetchUserId = async () => {
-    try {
-      let storedUserId = await AsyncStorage.getItem("tempUserId");
-      if (storedUserId) {
-        console.log("User ID found in AsyncStorage:", storedUserId);
-        return storedUserId;
-      }
+  // Substitua a função fetchUserId inteira por:
+  const getEffectiveIdentity = async (): Promise<{ userId: string | null; tempUserId: string | null; authToken: string | null }> => {
+    const authToken = await AsyncStorage.getItem("authToken");
+    const userIdFromJwt = await extractUserIdFromJwt();
+    // se estiver logado, use o userId do JWT
+    if (userIdFromJwt) return { userId: userIdFromJwt, tempUserId: null, authToken };
 
-      const token = await AsyncStorage.getItem("authToken");
-      if (!token) {
-        console.log("No authToken found in AsyncStorage");
-        return null;
-      }
-
-      const response = await fetch(`${API_BASE_URL}/userId`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log("User ID from API:", data.userId);
-        await AsyncStorage.setItem("tempUserId", data.userId);
-        return data.userId;
-      } else {
-        console.error("Error fetching user ID:", await response.text());
-        return null;
-      }
-    } catch (error) {
-      console.error("Error fetching user ID:", error);
-      return null;
+    // anônimo: tente recuperar/gerar tempUserId
+    let temp = await AsyncStorage.getItem("tempUserId");
+    if (!temp) {
+      // opcional: chame sua rota que cria um tempUserId; se não tiver, gere localmente
+      temp = crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
+      await AsyncStorage.setItem("tempUserId", temp);
     }
+    return { userId: null, tempUserId: temp, authToken: null };
   };
 
   // Função para buscar metas da API
   const fetchGoalsFromApi = async () => {
     try {
-      const userId = await fetchUserId();
-      if (!userId) {
-        console.error("No user ID found, cannot fetch goals");
-        return;
-      }
+      const { userId, tempUserId, authToken } = await getEffectiveIdentity();
+      const params = userId ? { userId } : { tempUserId }; // <-- chave certa conforme login
 
       const response = await axios.get(`${API_BASE_URL}/goals`, {
-        params: { userId },
+        params,
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
       });
 
       if (response.status === 200) {
-        setGoals(response.data);
+        // se sua API ainda devolve { id, data: {...} }, achatar aqui:
+        const items = Array.isArray(response.data) ? response.data.map((g: any) => (g.data ? { id: g.id, ...g.data } : g)) : [];
+        setGoals(items);
       }
     } catch (error: any) {
       console.error("Erro ao buscar metas:", error);
@@ -105,31 +99,25 @@ const GoalsScreen = () => {
 
   // Função para confirmar antes de deletar
   const confirmDelete = (id: string) => {
-    Alert.alert(
-      "Confirmação",
-      "Você tem certeza que deseja deletar essa meta?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        { text: "Deletar", onPress: () => deleteGoal(id), style: "destructive" },
-      ]
-    );
+    Alert.alert("Confirmação", "Você tem certeza que deseja deletar essa meta?", [
+      { text: "Cancelar", style: "cancel" },
+      { text: "Deletar", onPress: () => deleteGoal(id), style: "destructive" },
+    ]);
   };
 
   // Função para adicionar meta na API
   const addGoalToApi = async (goal: { text: string; periodicity: Periodicity }) => {
     try {
-      const userId = await fetchUserId();
-      if (!userId) {
-        console.error("No user ID found, cannot add goal");
-        return;
-      }
+      const { userId, tempUserId, authToken } = await getEffectiveIdentity();
+      const payload = userId ? { ...goal, userId } : { ...goal, tempUserId };
 
-      const goalWithUserId = { ...goal, userId };
-      console.log("Adding goal:", goalWithUserId);
+      const response = await axios.post(`${API_BASE_URL}/goals`, payload, {
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
+      });
 
-      const response = await axios.post(`${API_BASE_URL}/goals`, goalWithUserId);
       if ((response.status === 201 || response.status === 200 || response.status === 202) && response.data.id) {
-        setGoals((prevGoals) => [...prevGoals, { ...goalWithUserId, id: response.data.id }]);
+        const returned = response.data.goal ? { id: response.data.id, ...response.data.goal } : { id: response.data.id, ...payload };
+        setGoals((prev) => [...prev, returned]);
         Alert.alert("Meta adicionada com sucesso!");
       } else {
         Alert.alert("Erro ao adicionar a meta. Tente novamente.");
@@ -270,7 +258,7 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     marginLeft: 10,
-  }
+  },
 });
 
 export default GoalsScreen;
